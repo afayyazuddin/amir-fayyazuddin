@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 3.3.0">
+  <meta name="generator" content="Hugo 0.50" />
+  <meta name="author" content="Amir Fayyazuddin">
+
+  
+  
+  
+  
+    
+  
+  <meta name="description" content="In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn’t show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/cleaning-the-walkinshaw-dataset-part-2/">
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="#3f51b5">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.0/css/all.css" integrity="sha384-aOkxzJ5uQz7WBObEZcHvV5JvRW3TUc2rNPA7pe3AwnsUohiw1Vj2Rgx2KSOkF5+h" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" crossorigin="anonymous">
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono">
+  
+
+  <link rel="stylesheet" href="/styles.css">
+  
+  <link rel="stylesheet" href="/css/blue.css">
+  
+
+  
+  
+  
+
+  
+  <link rel="alternate" href="/index.xml" type="application/rss+xml" title="Amir Fayyazuddin">
+  <link rel="feed" href="/index.xml" type="application/rss+xml" title="Amir Fayyazuddin">
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/cleaning-the-walkinshaw-dataset-part-2/">
+
+  
+  
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="Amir Fayyazuddin">
+  <meta property="og:url" content="/post/cleaning-the-walkinshaw-dataset-part-2/">
+  <meta property="og:title" content="Cleaning the Walkinshaw dataset. Part 2  | Amir Fayyazuddin">
+  <meta property="og:description" content="In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn’t show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead."><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2019-01-07T00:00:00&#43;00:00">
+  
+  <meta property="article:modified_time" content="2019-01-07T00:00:00&#43;00:00">
+  
+
+  
+
+  
+
+  <title>Cleaning the Walkinshaw dataset. Part 2  | Amir Fayyazuddin</title>
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" role="textbox" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">Amir Fayyazuddin</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav ml-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/#about">
+            
+            <span>Home</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/#posts">
+            
+            <span>Posts</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/#contact">
+            
+            <span>Contact</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+
+        
+
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name">Cleaning the Walkinshaw dataset. Part 2 </h1>
+
+  
+
+  
+    
+
+<div class="article-metadata">
+
+  
+  
+  <span itemscope itemprop="author" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Amir Fayyazuddin">
+  </span>
+  
+
+  <span class="article-date">
+    
+    <meta content="2019-01-07 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+    <time datetime="2019-01-07 00:00:00 &#43;0000 UTC" itemprop="dateModified">
+      Jan 7, 2019
+    </time>
+  </span>
+  <span itemscope itemprop="publisher" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Amir Fayyazuddin">
+  </span>
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    19 min read
+  </span>
+  
+
+  
+  
+
+  
+
+  
+  
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    <li>
+      <a class="twitter"
+         href="https://twitter.com/intent/tweet?text=Cleaning%20the%20Walkinshaw%20dataset.%20Part%202%20&amp;url=%2fpost%2fcleaning-the-walkinshaw-dataset-part-2%2f"
+         target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+    <li>
+      <a class="facebook"
+         href="https://www.facebook.com/sharer.php?u=%2fpost%2fcleaning-the-walkinshaw-dataset-part-2%2f"
+         target="_blank" rel="noopener">
+        <i class="fab fa-facebook-f"></i>
+      </a>
+    </li>
+    <li>
+      <a class="linkedin"
+         href="https://www.linkedin.com/shareArticle?mini=true&amp;url=%2fpost%2fcleaning-the-walkinshaw-dataset-part-2%2f&amp;title=Cleaning%20the%20Walkinshaw%20dataset.%20Part%202%20"
+         target="_blank" rel="noopener">
+        <i class="fab fa-linkedin-in"></i>
+      </a>
+    </li>
+    <li>
+      <a class="weibo"
+         href="http://service.weibo.com/share/share.php?url=%2fpost%2fcleaning-the-walkinshaw-dataset-part-2%2f&amp;title=Cleaning%20the%20Walkinshaw%20dataset.%20Part%202%20"
+         target="_blank" rel="noopener">
+        <i class="fab fa-weibo"></i>
+      </a>
+    </li>
+    <li>
+      <a class="email"
+         href="mailto:?subject=Cleaning%20the%20Walkinshaw%20dataset.%20Part%202%20&amp;body=%2fpost%2fcleaning-the-walkinshaw-dataset-part-2%2f">
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  </ul>
+</div>
+
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+
+<p>In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn’t show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead.</p>
+<p>The data is supplied as an .xlsx Excel file that we need to pull into R. This file only provides the identifier from the VDRC stock center (vdrc_id) so we will need to find the corresponding CG number which we will subsequently use to fill in the gene names. I downloaded the supplementary file into the project directory as Walkinshaw2016_suppl.xlsx and placed it in the Walkinshaw_data folder in my project directory but you can store it in any directory and include a path to that directory. We will use the <strong>read_xlsx()</strong> function from the tidyverse <code>readxl</code> package to pull in this data. If we inspect the file in Excel we know that the first column is blank and the next four columns contain the following data: VDRC identifier, Performance Index (PI), SEM, Date, Wing Deformity (presence or absence). The <strong>read_excel</strong> command will automatically skip the empty column and guess the type of data in the other columns.</p>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
+library(readxl)
+suppl&lt;-readxl::read_excel(&quot;Walkinshaw_data/Walkinshaw2015_suppl.xlsx&quot;)
+
+dplyr::glimpse(suppl)</code></pre>
+<pre><code>## Observations: 3,207
+## Variables: 5
+## $ LINE              &lt;dbl&gt; 105968, 105691, 105961, 105969, 105970, 105987…
+## $ TRIAL             &lt;dbl&gt; 0.42, 0.33, 0.22, 0.23, 0.52, 0.11, 0.62, 0.41…
+## $ SEM               &lt;dbl&gt; 0.0440, 0.0570, 0.0620, 0.0750, 0.0410, 0.0533…
+## $ DATE              &lt;chr&gt; &quot;40718&quot;, &quot;40718&quot;, &quot;40718&quot;, &quot;40718&quot;, &quot;40718&quot;, &quot;…
+## $ `WING DEFORMITY?` &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…</code></pre>
+<p>Everything looks good except for the DATE column which is coded as text instead of date. The reason that the date column contains integer values is that Excel codes dates as the number of days since 30th December 1899. This suggests that readxl may have found some non-standard dates which caused it to default to using text instead of date. To look at the full complement of dates in the dataset we can treat the <em>DATE</em> column as a categorical variable and list all levels of the variable.</p>
+<pre class="r"><code>levels(as.factor(suppl$DATE))</code></pre>
+<pre><code>##   [1] &quot;2488&quot;            &quot;40554&quot;           &quot;40561&quot;          
+##   [4] &quot;40562&quot;           &quot;40563&quot;           &quot;40583&quot;          
+##   [7] &quot;40666&quot;           &quot;40668&quot;           &quot;40674&quot;          
+##  [10] &quot;40675&quot;           &quot;40676&quot;           &quot;40682&quot;          
+##  [13] &quot;40695&quot;           &quot;40701&quot;           &quot;40702&quot;          
+##  [16] &quot;40703&quot;           &quot;40708&quot;           &quot;40709&quot;          
+##  [19] &quot;40710&quot;           &quot;40711&quot;           &quot;40715&quot;          
+##  [22] &quot;40716&quot;           &quot;40717&quot;           &quot;40718&quot;          
+##  [25] &quot;40722&quot;           &quot;40723&quot;           &quot;40724&quot;          
+##  [28] &quot;40725&quot;           &quot;40730&quot;           &quot;40731&quot;          
+##  [31] &quot;40732&quot;           &quot;40736&quot;           &quot;40737&quot;          
+##  [34] &quot;40738&quot;           &quot;40739&quot;           &quot;40744&quot;          
+##  [37] &quot;40745&quot;           &quot;40746&quot;           &quot;40750&quot;          
+##  [40] &quot;40751&quot;           &quot;40752&quot;           &quot;40753&quot;          
+##  [43] &quot;40758&quot;           &quot;40759&quot;           &quot;40760&quot;          
+##  [46] &quot;40764&quot;           &quot;40765&quot;           &quot;40766&quot;          
+##  [49] &quot;40767&quot;           &quot;40772&quot;           &quot;40773&quot;          
+##  [52] &quot;40774&quot;           &quot;40778&quot;           &quot;40779&quot;          
+##  [55] &quot;40780&quot;           &quot;40781&quot;           &quot;40786&quot;          
+##  [58] &quot;40787&quot;           &quot;40788&quot;           &quot;40793&quot;          
+##  [61] &quot;40794&quot;           &quot;40795&quot;           &quot;40800&quot;          
+##  [64] &quot;40801&quot;           &quot;40802&quot;           &quot;40807&quot;          
+##  [67] &quot;40808&quot;           &quot;40809&quot;           &quot;40814&quot;          
+##  [70] &quot;40815&quot;           &quot;40816&quot;           &quot;40820&quot;          
+##  [73] &quot;40821&quot;           &quot;40822&quot;           &quot;40823&quot;          
+##  [76] &quot;40828&quot;           &quot;40829&quot;           &quot;40830&quot;          
+##  [79] &quot;40834&quot;           &quot;40835&quot;           &quot;40836&quot;          
+##  [82] &quot;40837&quot;           &quot;40842&quot;           &quot;40843&quot;          
+##  [85] &quot;40844&quot;           &quot;40848&quot;           &quot;40849&quot;          
+##  [88] &quot;40850&quot;           &quot;40851&quot;           &quot;40856&quot;          
+##  [91] &quot;40857&quot;           &quot;40858&quot;           &quot;40862&quot;          
+##  [94] &quot;40863&quot;           &quot;40864&quot;           &quot;40865&quot;          
+##  [97] &quot;40876&quot;           &quot;40878&quot;           &quot;40879&quot;          
+## [100] &quot;40891&quot;           &quot;40892&quot;           &quot;40893&quot;          
+## [103] &quot;40898&quot;           &quot;40899&quot;           &quot;40905&quot;          
+## [106] &quot;40906&quot;           &quot;40913&quot;           &quot;40914&quot;          
+## [109] &quot;40919&quot;           &quot;40920&quot;           &quot;40921&quot;          
+## [112] &quot;40926&quot;           &quot;40927&quot;           &quot;40928&quot;          
+## [115] &quot;40932&quot;           &quot;40933&quot;           &quot;40934&quot;          
+## [118] &quot;40935&quot;           &quot;40939&quot;           &quot;40940&quot;          
+## [121] &quot;40941&quot;           &quot;40942&quot;           &quot;40946&quot;          
+## [124] &quot;40947&quot;           &quot;40948&quot;           &quot;40953&quot;          
+## [127] &quot;40954&quot;           &quot;40955&quot;           &quot;40956&quot;          
+## [130] &quot;40970&quot;           &quot;40975&quot;           &quot;40976&quot;          
+## [133] &quot;40977&quot;           &quot;40981&quot;           &quot;40982&quot;          
+## [136] &quot;40983&quot;           &quot;40984&quot;           &quot;40988&quot;          
+## [139] &quot;40989&quot;           &quot;40990&quot;           &quot;40991&quot;          
+## [142] &quot;40995&quot;           &quot;40996&quot;           &quot;40997&quot;          
+## [145] &quot;40998&quot;           &quot;41002&quot;           &quot;41003&quot;          
+## [148] &quot;41004&quot;           &quot;41005&quot;           &quot;41009&quot;          
+## [151] &quot;41010&quot;           &quot;41011&quot;           &quot;41012&quot;          
+## [154] &quot;41016&quot;           &quot;41017&quot;           &quot;41018&quot;          
+## [157] &quot;41019&quot;           &quot;41023&quot;           &quot;41024&quot;          
+## [160] &quot;41025&quot;           &quot;41030&quot;           &quot;41031&quot;          
+## [163] &quot;41032&quot;           &quot;41033&quot;           &quot;41037&quot;          
+## [166] &quot;41038&quot;           &quot;41039&quot;           &quot;41040&quot;          
+## [169] &quot;41044&quot;           &quot;41045&quot;           &quot;41046&quot;          
+## [172] &quot;41047&quot;           &quot;41051&quot;           &quot;41052&quot;          
+## [175] &quot;41053&quot;           &quot;41054&quot;           &quot;41055&quot;          
+## [178] &quot;41059&quot;           &quot;41060&quot;           &quot;41061&quot;          
+## [181] &quot;41065&quot;           &quot;41066&quot;           &quot;41067&quot;          
+## [184] &quot;41068&quot;           &quot;41100&quot;           &quot;41101&quot;          
+## [187] &quot;41102&quot;           &quot;41103&quot;           &quot;41107&quot;          
+## [190] &quot;41108&quot;           &quot;41110&quot;           &quot;41114&quot;          
+## [193] &quot;41115&quot;           &quot;41116&quot;           &quot;41117&quot;          
+## [196] &quot;41121&quot;           &quot;41122&quot;           &quot;41123&quot;          
+## [199] &quot;41124&quot;           &quot;41128&quot;           &quot;41129&quot;          
+## [202] &quot;41130&quot;           &quot;41131&quot;           &quot;41135&quot;          
+## [205] &quot;41136&quot;           &quot;41137&quot;           &quot;41138&quot;          
+## [208] &quot;41142&quot;           &quot;41143&quot;           &quot;41144&quot;          
+## [211] &quot;41145&quot;           &quot;41149&quot;           &quot;41150&quot;          
+## [214] &quot;41163&quot;           &quot;41164&quot;           &quot;41166&quot;          
+## [217] &quot;41171&quot;           &quot;41172&quot;           &quot;41173&quot;          
+## [220] &quot;41177&quot;           &quot;41178&quot;           &quot;41179&quot;          
+## [223] &quot;41180&quot;           &quot;41184&quot;           &quot;41185&quot;          
+## [226] &quot;41186&quot;           &quot;41187&quot;           &quot;41191&quot;          
+## [229] &quot;41192&quot;           &quot;41193&quot;           &quot;41194&quot;          
+## [232] &quot;41195&quot;           &quot;41196&quot;           &quot;41198&quot;          
+## [235] &quot;41199&quot;           &quot;41200&quot;           &quot;41201&quot;          
+## [238] &quot;41205&quot;           &quot;41206&quot;           &quot;41207&quot;          
+## [241] &quot;41208&quot;           &quot;41212&quot;           &quot;41213&quot;          
+## [244] &quot;41214&quot;           &quot;41215&quot;           &quot;41254&quot;          
+## [247] &quot;41255&quot;           &quot;41256&quot;           &quot;41291&quot;          
+## [250] &quot;41292&quot;           &quot;41296&quot;           &quot;41298&quot;          
+## [253] &quot;41299&quot;           &quot;41303&quot;           &quot;41305&quot;          
+## [256] &quot;41306&quot;           &quot;41310&quot;           &quot;41311&quot;          
+## [259] &quot;41312&quot;           &quot;41313&quot;           &quot;41317&quot;          
+## [262] &quot;41318&quot;           &quot;41319&quot;           &quot;41320&quot;          
+## [265] &quot;41353&quot;           &quot;41354&quot;           &quot;41355&quot;          
+## [268] &quot;41401&quot;           &quot;41402&quot;           &quot;6/8/11&quot;         
+## [271] &quot;9&quot;               &quot;Date&quot;            &quot;Date: 5/25/2011&quot;
+## [274] &quot;Date: 5/26/2011&quot; &quot;Date: 5/27/2011&quot; &quot;Date: 6/01/2011&quot;
+## [277] &quot;Date: 6/01/2012&quot; &quot;Date: 6/01/2013&quot; &quot;Date: 6/01/2014&quot;
+## [280] &quot;Date:09/08/2011&quot;</code></pre>
+<p>We see from this list that in addition to the numerical dates encoded for Excel several other formats are also represented. We want to pay particular attention to two types of formats: 1. where the cell is empty and 2. where the cell contains actual dates but which are written in text format. We will replace empty cells with the string “NA” so that regular expressions will work when we use the <code>stringr</code> package in subsequent steps. We will re-format dates that are coded as text into a standard format and then use the <strong>as.date()</strong> function to convert them into a date object. Finally we will convert the Excel-formatted dates and merge all data to build a final table.</p>
+<p>In the following snippet we change the missing data to “NA” and then fix the dates coded as text.</p>
+<pre class="r"><code>library(stringr)
+# replace missing dates with NA
+suppl &lt;- suppl %&gt;% 
+  mutate(DATE=replace_na(DATE,&quot;NA&quot;))
+
+# copy text formatted dates to a separate table
+suppl_date &lt;- suppl %&gt;% 
+  filter(str_detect(DATE,&quot;[0-9]/&quot;)) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE &lt;- gsub(&quot;(20)([0-9][0-9])&quot;, &quot;\\2&quot;, as.character(suppl_date$DATE))
+
+# remove the text &quot;Date:&quot; and convert to a date object
+suppl_date &lt;- suppl_date %&gt;% 
+  mutate(DATE=str_replace(DATE, &quot;Date:&quot;,&quot;&quot;)) %&gt;% 
+  mutate(DATE=as.Date(DATE, format = &quot;%m/%d/%y&quot;))
+
+levels(as.factor(suppl_date$DATE))</code></pre>
+<pre><code>## [1] &quot;2011-05-25&quot; &quot;2011-05-26&quot; &quot;2011-05-27&quot; &quot;2011-06-01&quot; &quot;2011-06-08&quot;
+## [6] &quot;2011-09-08&quot; &quot;2012-06-01&quot; &quot;2013-06-01&quot; &quot;2014-06-01&quot;</code></pre>
+<p>In the next snippet we filter out the rows that we have already converted to dates and change the Excel encoded ones to R date objects. The cells that don’t contain dates will be coerced into NAs implying missing data.</p>
+<pre class="r"><code>suppl &lt;- suppl %&gt;% 
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, &quot;[0-9]/&quot;)) %&gt;% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = &quot;1899-12-30&quot;))</code></pre>
+<p>Now we can re-combine the two data tables into a single table with consistent date formatting.</p>
+<pre class="r"><code>suppl &lt;- bind_rows(suppl, suppl_date)
+
+levels(as.factor(suppl$DATE))</code></pre>
+<pre><code>##   [1] &quot;1900-01-08&quot; &quot;1906-10-23&quot; &quot;2011-01-11&quot; &quot;2011-01-18&quot; &quot;2011-01-19&quot;
+##   [6] &quot;2011-01-20&quot; &quot;2011-02-09&quot; &quot;2011-05-03&quot; &quot;2011-05-05&quot; &quot;2011-05-11&quot;
+##  [11] &quot;2011-05-12&quot; &quot;2011-05-13&quot; &quot;2011-05-19&quot; &quot;2011-05-25&quot; &quot;2011-05-26&quot;
+##  [16] &quot;2011-05-27&quot; &quot;2011-06-01&quot; &quot;2011-06-07&quot; &quot;2011-06-08&quot; &quot;2011-06-09&quot;
+##  [21] &quot;2011-06-14&quot; &quot;2011-06-15&quot; &quot;2011-06-16&quot; &quot;2011-06-17&quot; &quot;2011-06-21&quot;
+##  [26] &quot;2011-06-22&quot; &quot;2011-06-23&quot; &quot;2011-06-24&quot; &quot;2011-06-28&quot; &quot;2011-06-29&quot;
+##  [31] &quot;2011-06-30&quot; &quot;2011-07-01&quot; &quot;2011-07-06&quot; &quot;2011-07-07&quot; &quot;2011-07-08&quot;
+##  [36] &quot;2011-07-12&quot; &quot;2011-07-13&quot; &quot;2011-07-14&quot; &quot;2011-07-15&quot; &quot;2011-07-20&quot;
+##  [41] &quot;2011-07-21&quot; &quot;2011-07-22&quot; &quot;2011-07-26&quot; &quot;2011-07-27&quot; &quot;2011-07-28&quot;
+##  [46] &quot;2011-07-29&quot; &quot;2011-08-03&quot; &quot;2011-08-04&quot; &quot;2011-08-05&quot; &quot;2011-08-09&quot;
+##  [51] &quot;2011-08-10&quot; &quot;2011-08-11&quot; &quot;2011-08-12&quot; &quot;2011-08-17&quot; &quot;2011-08-18&quot;
+##  [56] &quot;2011-08-19&quot; &quot;2011-08-23&quot; &quot;2011-08-24&quot; &quot;2011-08-25&quot; &quot;2011-08-26&quot;
+##  [61] &quot;2011-08-31&quot; &quot;2011-09-01&quot; &quot;2011-09-02&quot; &quot;2011-09-07&quot; &quot;2011-09-08&quot;
+##  [66] &quot;2011-09-09&quot; &quot;2011-09-14&quot; &quot;2011-09-15&quot; &quot;2011-09-16&quot; &quot;2011-09-21&quot;
+##  [71] &quot;2011-09-22&quot; &quot;2011-09-23&quot; &quot;2011-09-28&quot; &quot;2011-09-29&quot; &quot;2011-09-30&quot;
+##  [76] &quot;2011-10-04&quot; &quot;2011-10-05&quot; &quot;2011-10-06&quot; &quot;2011-10-07&quot; &quot;2011-10-12&quot;
+##  [81] &quot;2011-10-13&quot; &quot;2011-10-14&quot; &quot;2011-10-18&quot; &quot;2011-10-19&quot; &quot;2011-10-20&quot;
+##  [86] &quot;2011-10-21&quot; &quot;2011-10-26&quot; &quot;2011-10-27&quot; &quot;2011-10-28&quot; &quot;2011-11-01&quot;
+##  [91] &quot;2011-11-02&quot; &quot;2011-11-03&quot; &quot;2011-11-04&quot; &quot;2011-11-09&quot; &quot;2011-11-10&quot;
+##  [96] &quot;2011-11-11&quot; &quot;2011-11-15&quot; &quot;2011-11-16&quot; &quot;2011-11-17&quot; &quot;2011-11-18&quot;
+## [101] &quot;2011-11-29&quot; &quot;2011-12-01&quot; &quot;2011-12-02&quot; &quot;2011-12-14&quot; &quot;2011-12-15&quot;
+## [106] &quot;2011-12-16&quot; &quot;2011-12-21&quot; &quot;2011-12-22&quot; &quot;2011-12-28&quot; &quot;2011-12-29&quot;
+## [111] &quot;2012-01-05&quot; &quot;2012-01-06&quot; &quot;2012-01-11&quot; &quot;2012-01-12&quot; &quot;2012-01-13&quot;
+## [116] &quot;2012-01-18&quot; &quot;2012-01-19&quot; &quot;2012-01-20&quot; &quot;2012-01-24&quot; &quot;2012-01-25&quot;
+## [121] &quot;2012-01-26&quot; &quot;2012-01-27&quot; &quot;2012-01-31&quot; &quot;2012-02-01&quot; &quot;2012-02-02&quot;
+## [126] &quot;2012-02-03&quot; &quot;2012-02-07&quot; &quot;2012-02-08&quot; &quot;2012-02-09&quot; &quot;2012-02-14&quot;
+## [131] &quot;2012-02-15&quot; &quot;2012-02-16&quot; &quot;2012-02-17&quot; &quot;2012-03-02&quot; &quot;2012-03-07&quot;
+## [136] &quot;2012-03-08&quot; &quot;2012-03-09&quot; &quot;2012-03-13&quot; &quot;2012-03-14&quot; &quot;2012-03-15&quot;
+## [141] &quot;2012-03-16&quot; &quot;2012-03-20&quot; &quot;2012-03-21&quot; &quot;2012-03-22&quot; &quot;2012-03-23&quot;
+## [146] &quot;2012-03-27&quot; &quot;2012-03-28&quot; &quot;2012-03-29&quot; &quot;2012-03-30&quot; &quot;2012-04-03&quot;
+## [151] &quot;2012-04-04&quot; &quot;2012-04-05&quot; &quot;2012-04-06&quot; &quot;2012-04-10&quot; &quot;2012-04-11&quot;
+## [156] &quot;2012-04-12&quot; &quot;2012-04-13&quot; &quot;2012-04-17&quot; &quot;2012-04-18&quot; &quot;2012-04-19&quot;
+## [161] &quot;2012-04-20&quot; &quot;2012-04-24&quot; &quot;2012-04-25&quot; &quot;2012-04-26&quot; &quot;2012-05-01&quot;
+## [166] &quot;2012-05-02&quot; &quot;2012-05-03&quot; &quot;2012-05-04&quot; &quot;2012-05-08&quot; &quot;2012-05-09&quot;
+## [171] &quot;2012-05-10&quot; &quot;2012-05-11&quot; &quot;2012-05-15&quot; &quot;2012-05-16&quot; &quot;2012-05-17&quot;
+## [176] &quot;2012-05-18&quot; &quot;2012-05-22&quot; &quot;2012-05-23&quot; &quot;2012-05-24&quot; &quot;2012-05-25&quot;
+## [181] &quot;2012-05-26&quot; &quot;2012-05-30&quot; &quot;2012-05-31&quot; &quot;2012-06-01&quot; &quot;2012-06-05&quot;
+## [186] &quot;2012-06-06&quot; &quot;2012-06-07&quot; &quot;2012-06-08&quot; &quot;2012-07-10&quot; &quot;2012-07-11&quot;
+## [191] &quot;2012-07-12&quot; &quot;2012-07-13&quot; &quot;2012-07-17&quot; &quot;2012-07-18&quot; &quot;2012-07-20&quot;
+## [196] &quot;2012-07-24&quot; &quot;2012-07-25&quot; &quot;2012-07-26&quot; &quot;2012-07-27&quot; &quot;2012-07-31&quot;
+## [201] &quot;2012-08-01&quot; &quot;2012-08-02&quot; &quot;2012-08-03&quot; &quot;2012-08-07&quot; &quot;2012-08-08&quot;
+## [206] &quot;2012-08-09&quot; &quot;2012-08-10&quot; &quot;2012-08-14&quot; &quot;2012-08-15&quot; &quot;2012-08-16&quot;
+## [211] &quot;2012-08-17&quot; &quot;2012-08-21&quot; &quot;2012-08-22&quot; &quot;2012-08-23&quot; &quot;2012-08-24&quot;
+## [216] &quot;2012-08-28&quot; &quot;2012-08-29&quot; &quot;2012-09-11&quot; &quot;2012-09-12&quot; &quot;2012-09-14&quot;
+## [221] &quot;2012-09-19&quot; &quot;2012-09-20&quot; &quot;2012-09-21&quot; &quot;2012-09-25&quot; &quot;2012-09-26&quot;
+## [226] &quot;2012-09-27&quot; &quot;2012-09-28&quot; &quot;2012-10-02&quot; &quot;2012-10-03&quot; &quot;2012-10-04&quot;
+## [231] &quot;2012-10-05&quot; &quot;2012-10-09&quot; &quot;2012-10-10&quot; &quot;2012-10-11&quot; &quot;2012-10-12&quot;
+## [236] &quot;2012-10-13&quot; &quot;2012-10-14&quot; &quot;2012-10-16&quot; &quot;2012-10-17&quot; &quot;2012-10-18&quot;
+## [241] &quot;2012-10-19&quot; &quot;2012-10-23&quot; &quot;2012-10-24&quot; &quot;2012-10-25&quot; &quot;2012-10-26&quot;
+## [246] &quot;2012-10-30&quot; &quot;2012-10-31&quot; &quot;2012-11-01&quot; &quot;2012-11-02&quot; &quot;2012-12-11&quot;
+## [251] &quot;2012-12-12&quot; &quot;2012-12-13&quot; &quot;2013-01-17&quot; &quot;2013-01-18&quot; &quot;2013-01-22&quot;
+## [256] &quot;2013-01-24&quot; &quot;2013-01-25&quot; &quot;2013-01-29&quot; &quot;2013-01-31&quot; &quot;2013-02-01&quot;
+## [261] &quot;2013-02-05&quot; &quot;2013-02-06&quot; &quot;2013-02-07&quot; &quot;2013-02-08&quot; &quot;2013-02-12&quot;
+## [266] &quot;2013-02-13&quot; &quot;2013-02-14&quot; &quot;2013-02-15&quot; &quot;2013-03-20&quot; &quot;2013-03-21&quot;
+## [271] &quot;2013-03-22&quot; &quot;2013-05-07&quot; &quot;2013-05-08&quot; &quot;2013-06-01&quot; &quot;2014-06-01&quot;</code></pre>
+<p>There are two sets of data points from the years 1900 and 1906 which clearly cannot be correct! We will leave them as is for now but these should be filtered out before conducting any time-dependent analysis.</p>
+<p>Next we want to format the supplementary data to match the format of the significant_lines table that we constructed in the previous post. To do this we will change the column headers and also code the presence or absence of physical abnormality with “+” and “-” respectively. Originally I had thought about rounding the PI and SEM to two decimal places to match the data from the text of the article. However, the PI and SEM scores in the supplementary table are inconsistently rounded which may help us with subsetting the data later on so we will leave them in their current state for now.</p>
+<pre class="r"><code>suppl&lt;-suppl %&gt;% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %&gt;%
+  # mutate(primary_PI = round(primary_PI, 2)) %&gt;% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %&gt;%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == &quot;Present&quot;, &quot;+&quot;)) %&gt;%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), &quot;-&quot;)) %&gt;% 
+  arrange(vdrc_id)
+
+head(suppl, 10)</code></pre>
+<pre><code>## # A tibble: 10 x 5
+##    vdrc_id primary_PI primary_SEM date       physical_abnormality
+##      &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;     &lt;chr&gt;               
+##  1    3047      0.34       0.09   2011-07-29 -                   
+##  2    3424      0.299      0.147  2013-01-25 -                   
+##  3    5070      0.401      0.141  2012-06-08 -                   
+##  4    6212      0.274      0.102  2011-12-14 -                   
+##  5    7219      0.41       0.044  2012-10-23 -                   
+##  6    7220      0.120      0.127  2013-03-20 -                   
+##  7    9524      0.3        0.0614 2011-06-28 -                   
+##  8   10836      0.492      0.0697 2013-02-12 -                   
+##  9   11471      0.16       0.09   2011-07-28 -                   
+## 10   11784      0.43       0.11   2011-07-29 -</code></pre>
+<p>The only identifiers in this table are VDRC Identifiers (<em>vdrc_id</em>) which means we have to use additional resources to find the name of the targeted gene. We can add identifiers such as gene symbols, Entrez Gene IDs and Flybase IDs that will make it easier to use this data. The VDRC (Vienna Drosophila Resource Center) provides a complete list of their lines in a table that contains several useful identifiers: <a href="https://stockcenter.vdrc.at/control/fullCatalogueExcel" class="uri">https://stockcenter.vdrc.at/control/fullCatalogueExcel</a>. We will use the <strong>read_xls()</strong> command from the <code>readxl</code> package to load this file into a new dataframe. The <strong>read_xls()</strong> command guesses the data types but for this file it had trouble recognizing the data types in two of the columns. It turns out that these columns contained no data for the lines used in this screen so we can skip those columns using the following command.</p>
+<pre class="r"><code>VDRC &lt;- read_xls(&quot;Walkinshaw_data/REPORT_VdrcCatalogue.xls&quot;, 
+                 col_types = c(&quot;guess&quot;, &quot;guess&quot;, &quot;guess&quot;, &quot;guess&quot;,
+                               &quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,
+                               &quot;guess&quot;,&quot;guess&quot;,&quot;skip&quot;,&quot;skip&quot;,&quot;guess&quot;,&quot;guess&quot;))
+
+glimpse(VDRC)</code></pre>
+<pre><code>## Observations: 33,286
+## Variables: 13
+## $ `vdrc id`       &lt;dbl&gt; 836, 837, 839, 841, 842, 843, 845, 846, 848, 849…
+## $ `construct id`  &lt;dbl&gt; 37, 37, 38, 44, 45, 45, 47, 47, 49, 49, 51, 52, …
+## $ library         &lt;chr&gt; &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, …
+## $ `cg number`     &lt;chr&gt; &quot;CG5819&quot;, &quot;CG5819&quot;, &quot;CG7121&quot;, &quot;CG4007&quot;, &quot;CG14396…
+## $ `on targets`    &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
+## $ `off targets`   &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, …
+## $ s19             &lt;dbl&gt; 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, …
+## $ `can repeats`   &lt;dbl&gt; 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, …
+## $ viability       &lt;chr&gt; &quot;viable&quot;, &quot;viable&quot;, &quot;viable&quot;, &quot;sterile&quot;, &quot;steril…
+## $ `chromosome nr` &lt;dbl&gt; 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 3, 1, 3, 2, …
+## $ status          &lt;chr&gt; &quot;available&quot;, &quot;unavailable&quot;, &quot;available&quot;, &quot;unavai…
+## $ `fb numbers`    &lt;chr&gt; &quot;\nFBgn0034717&quot;, &quot;FBgn0034717&quot;, &quot;FBgn0026760&quot;, &quot;…
+## $ synonyms        &lt;chr&gt; &quot;\ntartan/capricious-like\nCT18212\n5819&quot;, &quot;5819…</code></pre>
+<p>There are 33286 lines in the dataset and a number of identifiers are available for each of them. However, many of them, such as the FlyBase Gene (FBgn) and gene name identifiers, can be unstable and this table lists a number of synonyms including ones that have been discarded. On the other hand only a single CG number is listed per line which we can later use in conjunction with the Ensembl BioMart webservice from the European Bioinformatics Institute (EBI) to add the current versions of the other identifiers. So for the time being we will discard the FBgn numbers and synonyms encoded by the last two columns of the dataframe and rename other columns so that they match the tables from the article. We will then use an inner join to combine the two datasets but discard all rows of the VDRC data that don’t have a counterpart in the supplementary data from the paper.</p>
+<pre class="r"><code>all_lines&lt;-VDRC %&gt;% 
+  dplyr::select(1:11) %&gt;% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %&gt;% 
+  dplyr::inner_join(suppl, by=&quot;vdrc_id&quot;)
+
+glimpse(all_lines)</code></pre>
+<pre><code>## Observations: 3,206
+## Variables: 15
+## $ vdrc_id              &lt;dbl&gt; 3047, 3424, 5070, 6212, 7219, 7220, 10836, …
+## $ construct_id         &lt;dbl&gt; 2537, 394, 2336, 1469, 715, 715, 4401, 732,…
+## $ lib                  &lt;chr&gt; &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;GD&quot;, &quot;…
+## $ cg_number            &lt;chr&gt; &quot;CG17348&quot;, &quot;CG8451&quot;, &quot;CG8339&quot;, &quot;CG33956&quot;, &quot;…
+## $ on_targets           &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ off_targets          &lt;dbl&gt; 0, 0, 0, 1, 1, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0…
+## $ s19                  &lt;dbl&gt; 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.99, 1…
+## $ can_repeats          &lt;dbl&gt; 2, 2, 2, 3, 2, 2, 5, 3, 3, 2, 2, 3, 4, 2, 2…
+## $ viability            &lt;chr&gt; &quot;viable&quot;, &quot;viable&quot;, &quot;viable&quot;, &quot;lethal&quot;, &quot;vi…
+## $ chromosome_nr        &lt;dbl&gt; 2, 3, 3, 3, 3, 3, 2, 2, 1, 3, 2, 2, 2, 3, 3…
+## $ status               &lt;chr&gt; &quot;available&quot;, &quot;available&quot;, &quot;available&quot;, &quot;ava…
+## $ primary_PI           &lt;dbl&gt; 0.34000000, 0.29904285, 0.40079441, 0.27353…
+## $ primary_SEM          &lt;dbl&gt; 0.09000000, 0.14749334, 0.14076967, 0.10236…
+## $ date                 &lt;date&gt; 2011-07-29, 2013-01-25, 2012-06-08, 2011-1…
+## $ physical_abnormality &lt;chr&gt; &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;-&quot;…</code></pre>
+<p>Next we will use the biomart service of EBI to get current Entrez Gene IDs, FlyBase numbers and gene symbols using the list of CG numbers from the all_lines dataframe. The <code>biomaRt</code> package allows very convenient programmatic access to BioMart.</p>
+<pre class="r"><code>library(biomaRt)
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart=&quot;ensembl&quot;, dataset=&quot;dmelanogaster_gene_ensembl&quot;,
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+genenames &lt;- getBM(attributes=c(&#39;external_gene_name&#39;,&#39;entrezgene&#39;,&#39;flybase_gene_id&#39;,
+                                &#39;flybasecgid_gene&#39;), filters = &#39;flybasecgid_gene&#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)</code></pre>
+<p>Let’s check the size of the genenames dataframe to get an idea if we were able to map every identifier. First we will check how many unique CG numbers there are in the Walkinshaw dataset:</p>
+<pre class="r"><code>all_lines$cg_number %&gt;% 
+  unique() %&gt;% 
+  length()</code></pre>
+<pre><code>## [1] 2999</code></pre>
+<p>Now we want to check how many ids we got from genenames:</p>
+<pre class="r"><code>dim(genenames)</code></pre>
+<pre><code>## [1] 3020    4</code></pre>
+<p>It is odd that we have 3020 identifiers from genenames compared to 2999 that we expected so we definitely want to see which CG numbers are being mapped to multiple identifiers. First we will look for CG numbers that are duplicated and store them in a vector called dup. Next we will filter the genenames dataframe to find rows which have duplicated CG ids:</p>
+<pre class="r"><code>dup&lt;-
+  genenames[which(duplicated(genenames$flybasecgid_gene)==TRUE),]$flybasecgid_gene
+
+dplyr::filter(genenames, flybasecgid_gene %in% dup)</code></pre>
+<pre><code>##    external_gene_name entrezgene flybase_gene_id flybasecgid_gene
+## 1            Lcp65Ab2      48382     FBgn0020643          CG18773
+## 2            Lcp65Ab2      48381     FBgn0020643          CG18773
+## 3        His3:CG31613    3772163     FBgn0051613          CG31613
+## 4        His3:CG31613    3772198     FBgn0051613          CG31613
+## 5        His3:CG31613    3772374     FBgn0051613          CG31613
+## 6        His3:CG31613    3772173     FBgn0051613          CG31613
+## 7        His3:CG31613    3772032     FBgn0051613          CG31613
+## 8        His3:CG31613    3771771     FBgn0051613          CG31613
+## 9        His3:CG31613    3771959     FBgn0051613          CG31613
+## 10       His3:CG31613    3772421     FBgn0051613          CG31613
+## 11       His3:CG31613    3772607     FBgn0051613          CG31613
+## 12       His3:CG31613    3772517     FBgn0051613          CG31613
+## 13       His3:CG31613    3772231     FBgn0051613          CG31613
+## 14       His3:CG31613     318847     FBgn0051613          CG31613
+## 15       His3:CG31613    3772149     FBgn0051613          CG31613
+## 16       His3:CG31613    3772189     FBgn0051613          CG31613
+## 17       His3:CG31613    3772552     FBgn0051613          CG31613
+## 18       His3:CG31613    3771723     FBgn0051613          CG31613
+## 19       His3:CG31613    3772191     FBgn0051613          CG31613
+## 20       His3:CG31613    3772370     FBgn0051613          CG31613
+## 21       His3:CG31613    3772619     FBgn0051613          CG31613
+## 22       His3:CG31613    3771792     FBgn0051613          CG31613
+## 23       His3:CG31613    3772518     FBgn0051613          CG31613
+## 24       His3:CG31613    3771729     FBgn0051613          CG31613
+## 25       His3:CG31613    3772489     FBgn0051613          CG31613</code></pre>
+<p>There are two CG numbers that have multiple Entrez IDs. Let’s deal with CG31613 first. In Eukaryotes, that is organisms that have a nucleus, DNA is wrapped around structures called nucleosomes which are octamers that consist of 4 different histone proteins of which Histone3 is one. Since this is a highly abundant and necessary protein, there are a total of 23 genes that encode for it. Five of these genes, including CG31613 are present in a cluster on chromosome 2L. In the Walkinshaw screen, 5 lines were used to target this gene cluster but since they all have an identical DNA sequence, they used a single CG number to refer to these lines. The Entrez Gene IDs probably reflect this ambiguity. CG18773, the second ambiguous CG number encodes a cuticular protein for which there are two identical genes in the fly genome. We will deal with both of these CG numbers by removing the Entrez IDs since they add no significant information to the dataset.</p>
+<pre class="r"><code># filter rows in genenames with CG ids not in the dup vector (note the ! operator)
+genenames &lt;- dplyr::filter(genenames, !(flybasecgid_gene %in% dup))
+
+dim(genenames)</code></pre>
+<pre><code>## [1] 2995    4</code></pre>
+<p>The <em>genenames</em> dataframe now has 2995 rows while the <em>all_lines</em> dataframe has 2999. Taking into account that we removed CG18733 and CG31613, we should have 2997 rows in <em>genenames</em>. We can check if there are any CG numbers that were not mapped by the BioMart webservice:</p>
+<pre class="r"><code>all_lines$cg_number[(all_lines$cg_number %in% genenames$flybasecgid_gene)==FALSE]</code></pre>
+<pre><code>##  [1] &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot; 
+##  [8] &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot; 
+## [15] &quot;CG40378&quot; &quot;CGnone&quot;  &quot;CG18773&quot; &quot;CG31613&quot; &quot;CG31613&quot; &quot;CG31613&quot; &quot;CG31613&quot;
+## [22] &quot;CG31613&quot; &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot; 
+## [29] &quot;CGnone&quot;  &quot;CGnone&quot;  &quot;CGnone&quot;</code></pre>
+<p>There are indeed 2 CG numbers that were not mapped. One is called CGnone of which there are 24 instances and the other one is CG40378. The VDRC table shows that most of these lines are no longer available with one exception, 104930. I found the genomic DNA sequence for this construct on the <a href="https://stockcenter.vdrc.at/control/main">VDRC website</a> and used BLAST on the <a href="http://flybase.net/blast/">FlyBase website</a> to find where it mapped on the <em>Drosophila</em> genome. It turns out this line targets a long non-coding RNA called lncRNA:CR13130. The other unmapped CG number, CG40378, has been changed to CG45781. We will change CG40378 to CG45781, for stock 104930 we will change CGnone to CR13130, remove the other rows with CGnone and use BioMart to fill in the rest of the information.</p>
+<pre class="r"><code>all_lines &lt;- mutate(all_lines, cg_number = ifelse(cg_number == &quot;CG40378&quot;, 
+                                                  &quot;CG45781&quot;, cg_number))
+all_lines &lt;- mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  &quot;CR13130&quot;, cg_number))
+
+all_lines &lt;- all_lines %&gt;% 
+  filter(cg_number != &quot;CGnone&quot;)
+
+genenames &lt;- getBM(attributes=c(&#39;external_gene_name&#39;,&#39;flybase_gene_id&#39;,
+                                &#39;flybasecgid_gene&#39;), filters = &#39;flybasecgid_gene&#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+dim(genenames)</code></pre>
+<pre><code>## [1] 2999    3</code></pre>
+<p>Now we have the same number of unique rows in the <em>genenames</em> dataframe as in the <em>all_lines</em> dataframe. We can also confirm that we have removed all of the CGnone rows. We can add the gene symbols and flybase gene ids to the <em>all_lines</em> dataframe using an inner join with the <em>genenames</em> dataframe.</p>
+<pre class="r"><code>all_lines &lt;- inner_join(genenames, all_lines, by=c(&quot;flybasecgid_gene&quot;=&quot;cg_number&quot;)) %&gt;% 
+  dplyr::select(4,1,2,3,5:19) %&gt;% 
+  rename(cg_number=flybasecgid_gene)
+
+glimpse(all_lines)</code></pre>
+<pre><code>## Observations: 3,183
+## Variables: 19
+## $ vdrc_id              &lt;dbl&gt; 101031, 28150, 100587, 100007, 100226, 1002…
+## $ external_gene_name   &lt;chr&gt; &quot;Zip71B&quot;, &quot;Galphai&quot;, &quot;emc&quot;, &quot;CG10137&quot;, &quot;x16…
+## $ flybase_gene_id      &lt;chr&gt; &quot;FBgn0036461&quot;, &quot;FBgn0001104&quot;, &quot;FBgn0000575&quot;…
+## $ cg_number            &lt;chr&gt; &quot;CG10006&quot;, &quot;CG10060&quot;, &quot;CG1007&quot;, &quot;CG10137&quot;, …
+## $ construct_id         &lt;dbl&gt; 106638, 12576, 108316, 102904, 107171, 1057…
+## $ library              &lt;chr&gt; &quot;KK&quot;, &quot;GD&quot;, &quot;KK&quot;, &quot;KK&quot;, &quot;KK&quot;, &quot;KK&quot;, &quot;KK&quot;, &quot;…
+## $ on_targets           &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ off_targets          &lt;dbl&gt; 2, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0…
+## $ s19                  &lt;dbl&gt; 0.99, 1.00, 1.00, 0.99, 1.00, 1.00, 1.00, 1…
+## $ can_repeats          &lt;dbl&gt; 3, 2, 2, 2, 3, 3, 3, 3, 2, 3, 2, 3, 2, 2, 3…
+## $ viability            &lt;chr&gt; &quot;viable&quot;, &quot;lethal&quot;, &quot;viable&quot;, &quot;viable&quot;, &quot;vi…
+## $ chromosome_nr        &lt;dbl&gt; 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2…
+## $ status               &lt;chr&gt; &quot;available&quot;, &quot;available&quot;, &quot;available&quot;, &quot;ava…
+## $ vector               &lt;chr&gt; &quot;FBgn0036461&quot;, &quot;FBgn0001104&quot;, &quot;FBgn0010869\…
+## $ landing_site         &lt;chr&gt; &quot;dZip71B\ncg10006\nZip71B\nZinc/iron regula…
+## $ primary_PI           &lt;dbl&gt; 0.4700000, 0.4900000, 0.3900000, 0.4398482,…
+## $ primary_SEM          &lt;dbl&gt; 0.03000000, 0.08100000, 0.04800000, 0.07489…
+## $ date                 &lt;date&gt; 2011-07-08, 2012-10-02, 2011-06-09, 2011-0…
+## $ physical_abnormality &lt;chr&gt; &quot;-&quot;, &quot;-&quot;, &quot;-&quot;, &quot;+&quot;, &quot;-&quot;, &quot;-&quot;, &quot;+&quot;, &quot;-&quot;, &quot;-&quot;…</code></pre>
+<p>We can collect the entire data cleaning code into a single script that we can source whenever we need to re-create the table.</p>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(biomaRt)
+
+suppl&lt;-readxl::read_excel(&quot;/path/to/directory/Walkinshaw2015_suppl.xlsx&quot;)
+
+
+# copy text formatted dates to a separate table
+suppl_date &lt;- suppl %&gt;% 
+  filter(str_detect(DATE,&quot;[0-9]/&quot;)) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE &lt;- gsub(&quot;(20)([0-9][0-9])&quot;, &quot;\\2&quot;, as.character(suppl_date$DATE))
+
+# remove the text &quot;Date:&quot; and convert to a date object
+suppl_date &lt;- suppl_date %&gt;% 
+  mutate(DATE=str_replace(DATE, &quot;Date:&quot;,&quot;&quot;)) %&gt;% 
+  mutate(DATE=as.Date(DATE, format = &quot;%m/%d/%y&quot;))
+
+suppl &lt;- suppl %&gt;% 
+  # replace missing dates with NA
+  mutate(DATE=replace_na(DATE,&quot;NA&quot;))
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, &quot;[0-9]/&quot;)) %&gt;% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = &quot;1899-12-30&quot;)) %&gt;% 
+  bind_rows(suppl_date) %&gt;% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %&gt;%
+  # mutate(primary_PI = round(primary_PI, 2)) %&gt;% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %&gt;%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == &quot;Present&quot;, &quot;+&quot;)) %&gt;%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), &quot;-&quot;)) %&gt;% 
+  arrange(vdrc_id)
+  
+VDRC &lt;- read_xls(&quot;/path/to/directory/REPORT_VdrcCatalogue.xls&quot;, 
+                 col_types = c(&quot;guess&quot;, &quot;guess&quot;, &quot;guess&quot;, &quot;guess&quot;,
+                               &quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,&quot;guess&quot;,
+                               &quot;guess&quot;,&quot;guess&quot;,&quot;skip&quot;,&quot;skip&quot;,&quot;guess&quot;,&quot;guess&quot;))
+
+all_lines&lt;-VDRC %&gt;% 
+  dplyr::select(1:11) %&gt;% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %&gt;% 
+  dplyr::inner_join(suppl, by=&quot;vdrc_id&quot;) %&gt;% 
+  
+  mutate(all_lines, cg_number = ifelse(cg_number == &quot;CG40378&quot;, 
+                                                    &quot;CG45781&quot;, cg_number)) %&gt;% 
+  mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  &quot;CR13130&quot;, cg_number)) %&gt;% 
+  filter(cg_number != &quot;CGnone&quot;)
+
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart=&quot;ensembl&quot;, dataset=&quot;dmelanogaster_gene_ensembl&quot;,
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+
+genenames &lt;- getBM(attributes=c(&#39;external_gene_name&#39;,&#39;flybase_gene_id&#39;,
+                                &#39;flybasecgid_gene&#39;), filters = &#39;flybasecgid_gene&#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+all_lines &lt;- inner_join(genenames, all_lines, by=c(&quot;flybasecgid_gene&quot;=&quot;cg_number&quot;)) %&gt;% 
+  dplyr::select(4,1,2,3,5:19) %&gt;% 
+  rename(cg_number=flybasecgid_gene)</code></pre>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.5.1 (2018-07-02)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS  10.14.2
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] bindrcpp_0.2.2 stringr_1.3.1  readxl_1.2.0   tidyr_0.8.1   
+## [5] dplyr_0.7.6   
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.18     knitr_1.20       bindr_0.1.1      magrittr_1.5    
+##  [5] tidyselect_0.2.4 R6_2.2.2         rlang_0.3.0.1    fansi_0.4.0     
+##  [9] tools_3.5.1      xfun_0.3         utf8_1.1.4       cli_1.0.1       
+## [13] htmltools_0.3.6  yaml_2.2.0       rprojroot_1.3-2  digest_0.6.16   
+## [17] assertthat_0.2.0 tibble_2.0.0     crayon_1.3.4     bookdown_0.7    
+## [21] purrr_0.2.5      glue_1.3.0       evaluate_0.11    rmarkdown_1.10  
+## [25] blogdown_0.8     stringi_1.2.4    cellranger_1.1.0 compiler_3.5.1  
+## [29] pillar_1.3.1     backports_1.1.2  pkgconfig_2.0.2</code></pre>
+<div id="references" class="section level3">
+<h3>References</h3>
+<p>Stat454
+Variance Explained
+Stack Overflow</p>
+<hr />
+</div>
+
+    </div>
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+<div class="media author-card" itemscope itemtype="http://schema.org/Person">
+  
+  <div class="media-body">
+    <h5 class="card-title" itemprop="name"><a href="/">Amir Fayyazuddin</a></h5>
+    
+    
+    <ul class="network-icon" aria-hidden="true">
+      
+      
+      
+      
+        
+      
+      
+      
+      
+      
+        
+      
+      <li>
+        <a itemprop="sameAs" href="/#contact" >
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+      
+      
+      
+      
+        
+      
+      
+      
+      
+      
+        
+      
+      <li>
+        <a itemprop="sameAs" href="https://twitter.com/AmirFayyazuddin" target="_blank" rel="noopener">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+      
+      
+      
+      
+        
+      
+      
+      
+      
+      
+        
+      
+      <li>
+        <a itemprop="sameAs" href="https://github.com/afayyazuddin" target="_blank" rel="noopener">
+          <i class="fab fa-github"></i>
+        </a>
+      </li>
+      
+      
+      
+      
+        
+      
+      
+      
+      
+      
+        
+      
+      <li>
+        <a itemprop="sameAs" href="https://www.linkedin.com/in/amirfayyazuddin/" target="_blank" rel="noopener">
+          <i class="fab fa-linkedin"></i>
+        </a>
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+
+
+    
+    
+
+    
+
+    
+
+
+  </div>
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    &copy; 2019 Amir Fayyazuddin &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha512-+NqPlbbtM1QqiK8ZAo4Yrj2c4lNQoGv8P79DPtKzj++l5jnN39rHA/xsqn8zE9l0uSoxaCdrOgFs6yjyfbBxSg==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.3/imagesloaded.pkgd.min.js" integrity="sha512-umsR78NN0D23AzgoZ11K7raBD+R6hqKojyBZs1w8WvYlsI+QuKRGBx3LFCwhatzBunCjDuJpDHwxD13sLMbpRA==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.4/isotope.pkgd.min.js" integrity="sha512-VDBOIlDbuC4VWxGJNmuFRQ0Li0SKkDpmGyuhAG5LTDLd/dJ/S0WMVxriR2Y+CyPL5gzjpN4f/6iqWVBJlht0tQ==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+        
+      
+
+      
+      
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "results found",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    <script src="/js/academic.min.70f0041f5a24c6a675ac218c98d7ef71.js"></script>
+
+    
+
+  </body>
+</html>
+

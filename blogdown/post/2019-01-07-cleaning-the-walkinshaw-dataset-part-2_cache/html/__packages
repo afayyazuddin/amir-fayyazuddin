@@ -1,0 +1,7 @@
+base
+dplyr
+tidyr
+readxl
+stringr
+bindrcpp
+biomaRt

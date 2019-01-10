@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Amir Fayyazuddin</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Amir Fayyazuddin</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2019 Amir Fayyazuddin</copyright>
+    <lastBuildDate>Sun, 01 Jan 2017 00:00:00 -0800</lastBuildDate>
+    
+	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Cleaning the Walkinshaw dataset. Part 2 </title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-2/</link>
+      <pubDate>Mon, 07 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-2/</guid>
+      <description>In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn’t show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead.</description>
+    </item>
+    
+    <item>
+      <title>Cleaning the Walkinshaw dataset. Part I</title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-i/</link>
+      <pubDate>Tue, 01 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-i/</guid>
+      <description>In 2015, the Davis lab published a genome-wide screen of genes involved in memory using 3207 RNAi lines from the VDRC collection (Walkinshaw et al. 2015 Genetics 199(4):1173-1182). They generously published the their entire primary dataset including the scores for the lines that didn’t show an effect as well as those that did. The data is split across several tables in the paper itself as well as in the supplementary data and some of the identifiers are not standard.</description>
+    </item>
+    
+  </channel>
+</rss>

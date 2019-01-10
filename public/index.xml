@@ -1,0 +1,1131 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Amir Fayyazuddin on Amir Fayyazuddin</title>
+    <link>/</link>
+    <description>Recent content in Amir Fayyazuddin on Amir Fayyazuddin</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2019 Amir Fayyazuddin</copyright>
+    <lastBuildDate>Sun, 15 Oct 2017 00:00:00 -0700</lastBuildDate>
+    <atom:link href="/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Cleaning the Walkinshaw dataset. Part 2 </title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-2/</link>
+      <pubDate>Mon, 07 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-2/</guid>
+      <description>
+
+
+&lt;p&gt;In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn’t show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead.&lt;/p&gt;
+&lt;p&gt;The data is supplied as an .xlsx Excel file that we need to pull into R. This file only provides the identifier from the VDRC stock center (vdrc_id) so we will need to find the corresponding CG number which we will subsequently use to fill in the gene names. I downloaded the supplementary file into the project directory as Walkinshaw2016_suppl.xlsx and placed it in the Walkinshaw_data folder in my project directory but you can store it in any directory and include a path to that directory. We will use the &lt;strong&gt;read_xlsx()&lt;/strong&gt; function from the tidyverse &lt;code&gt;readxl&lt;/code&gt; package to pull in this data. If we inspect the file in Excel we know that the first column is blank and the next four columns contain the following data: VDRC identifier, Performance Index (PI), SEM, Date, Wing Deformity (presence or absence). The &lt;strong&gt;read_excel&lt;/strong&gt; command will automatically skip the empty column and guess the type of data in the other columns.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(dplyr)
+library(tidyr)
+library(readxl)
+suppl&amp;lt;-readxl::read_excel(&amp;quot;Walkinshaw_data/Walkinshaw2015_suppl.xlsx&amp;quot;)
+
+dplyr::glimpse(suppl)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 3,207
+## Variables: 5
+## $ LINE              &amp;lt;dbl&amp;gt; 105968, 105691, 105961, 105969, 105970, 105987…
+## $ TRIAL             &amp;lt;dbl&amp;gt; 0.42, 0.33, 0.22, 0.23, 0.52, 0.11, 0.62, 0.41…
+## $ SEM               &amp;lt;dbl&amp;gt; 0.0440, 0.0570, 0.0620, 0.0750, 0.0410, 0.0533…
+## $ DATE              &amp;lt;chr&amp;gt; &amp;quot;40718&amp;quot;, &amp;quot;40718&amp;quot;, &amp;quot;40718&amp;quot;, &amp;quot;40718&amp;quot;, &amp;quot;40718&amp;quot;, &amp;quot;…
+## $ `WING DEFORMITY?` &amp;lt;chr&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Everything looks good except for the DATE column which is coded as text instead of date. The reason that the date column contains integer values is that Excel codes dates as the number of days since 30th December 1899. This suggests that readxl may have found some non-standard dates which caused it to default to using text instead of date. To look at the full complement of dates in the dataset we can treat the &lt;em&gt;DATE&lt;/em&gt; column as a categorical variable and list all levels of the variable.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;levels(as.factor(suppl$DATE))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##   [1] &amp;quot;2488&amp;quot;            &amp;quot;40554&amp;quot;           &amp;quot;40561&amp;quot;          
+##   [4] &amp;quot;40562&amp;quot;           &amp;quot;40563&amp;quot;           &amp;quot;40583&amp;quot;          
+##   [7] &amp;quot;40666&amp;quot;           &amp;quot;40668&amp;quot;           &amp;quot;40674&amp;quot;          
+##  [10] &amp;quot;40675&amp;quot;           &amp;quot;40676&amp;quot;           &amp;quot;40682&amp;quot;          
+##  [13] &amp;quot;40695&amp;quot;           &amp;quot;40701&amp;quot;           &amp;quot;40702&amp;quot;          
+##  [16] &amp;quot;40703&amp;quot;           &amp;quot;40708&amp;quot;           &amp;quot;40709&amp;quot;          
+##  [19] &amp;quot;40710&amp;quot;           &amp;quot;40711&amp;quot;           &amp;quot;40715&amp;quot;          
+##  [22] &amp;quot;40716&amp;quot;           &amp;quot;40717&amp;quot;           &amp;quot;40718&amp;quot;          
+##  [25] &amp;quot;40722&amp;quot;           &amp;quot;40723&amp;quot;           &amp;quot;40724&amp;quot;          
+##  [28] &amp;quot;40725&amp;quot;           &amp;quot;40730&amp;quot;           &amp;quot;40731&amp;quot;          
+##  [31] &amp;quot;40732&amp;quot;           &amp;quot;40736&amp;quot;           &amp;quot;40737&amp;quot;          
+##  [34] &amp;quot;40738&amp;quot;           &amp;quot;40739&amp;quot;           &amp;quot;40744&amp;quot;          
+##  [37] &amp;quot;40745&amp;quot;           &amp;quot;40746&amp;quot;           &amp;quot;40750&amp;quot;          
+##  [40] &amp;quot;40751&amp;quot;           &amp;quot;40752&amp;quot;           &amp;quot;40753&amp;quot;          
+##  [43] &amp;quot;40758&amp;quot;           &amp;quot;40759&amp;quot;           &amp;quot;40760&amp;quot;          
+##  [46] &amp;quot;40764&amp;quot;           &amp;quot;40765&amp;quot;           &amp;quot;40766&amp;quot;          
+##  [49] &amp;quot;40767&amp;quot;           &amp;quot;40772&amp;quot;           &amp;quot;40773&amp;quot;          
+##  [52] &amp;quot;40774&amp;quot;           &amp;quot;40778&amp;quot;           &amp;quot;40779&amp;quot;          
+##  [55] &amp;quot;40780&amp;quot;           &amp;quot;40781&amp;quot;           &amp;quot;40786&amp;quot;          
+##  [58] &amp;quot;40787&amp;quot;           &amp;quot;40788&amp;quot;           &amp;quot;40793&amp;quot;          
+##  [61] &amp;quot;40794&amp;quot;           &amp;quot;40795&amp;quot;           &amp;quot;40800&amp;quot;          
+##  [64] &amp;quot;40801&amp;quot;           &amp;quot;40802&amp;quot;           &amp;quot;40807&amp;quot;          
+##  [67] &amp;quot;40808&amp;quot;           &amp;quot;40809&amp;quot;           &amp;quot;40814&amp;quot;          
+##  [70] &amp;quot;40815&amp;quot;           &amp;quot;40816&amp;quot;           &amp;quot;40820&amp;quot;          
+##  [73] &amp;quot;40821&amp;quot;           &amp;quot;40822&amp;quot;           &amp;quot;40823&amp;quot;          
+##  [76] &amp;quot;40828&amp;quot;           &amp;quot;40829&amp;quot;           &amp;quot;40830&amp;quot;          
+##  [79] &amp;quot;40834&amp;quot;           &amp;quot;40835&amp;quot;           &amp;quot;40836&amp;quot;          
+##  [82] &amp;quot;40837&amp;quot;           &amp;quot;40842&amp;quot;           &amp;quot;40843&amp;quot;          
+##  [85] &amp;quot;40844&amp;quot;           &amp;quot;40848&amp;quot;           &amp;quot;40849&amp;quot;          
+##  [88] &amp;quot;40850&amp;quot;           &amp;quot;40851&amp;quot;           &amp;quot;40856&amp;quot;          
+##  [91] &amp;quot;40857&amp;quot;           &amp;quot;40858&amp;quot;           &amp;quot;40862&amp;quot;          
+##  [94] &amp;quot;40863&amp;quot;           &amp;quot;40864&amp;quot;           &amp;quot;40865&amp;quot;          
+##  [97] &amp;quot;40876&amp;quot;           &amp;quot;40878&amp;quot;           &amp;quot;40879&amp;quot;          
+## [100] &amp;quot;40891&amp;quot;           &amp;quot;40892&amp;quot;           &amp;quot;40893&amp;quot;          
+## [103] &amp;quot;40898&amp;quot;           &amp;quot;40899&amp;quot;           &amp;quot;40905&amp;quot;          
+## [106] &amp;quot;40906&amp;quot;           &amp;quot;40913&amp;quot;           &amp;quot;40914&amp;quot;          
+## [109] &amp;quot;40919&amp;quot;           &amp;quot;40920&amp;quot;           &amp;quot;40921&amp;quot;          
+## [112] &amp;quot;40926&amp;quot;           &amp;quot;40927&amp;quot;           &amp;quot;40928&amp;quot;          
+## [115] &amp;quot;40932&amp;quot;           &amp;quot;40933&amp;quot;           &amp;quot;40934&amp;quot;          
+## [118] &amp;quot;40935&amp;quot;           &amp;quot;40939&amp;quot;           &amp;quot;40940&amp;quot;          
+## [121] &amp;quot;40941&amp;quot;           &amp;quot;40942&amp;quot;           &amp;quot;40946&amp;quot;          
+## [124] &amp;quot;40947&amp;quot;           &amp;quot;40948&amp;quot;           &amp;quot;40953&amp;quot;          
+## [127] &amp;quot;40954&amp;quot;           &amp;quot;40955&amp;quot;           &amp;quot;40956&amp;quot;          
+## [130] &amp;quot;40970&amp;quot;           &amp;quot;40975&amp;quot;           &amp;quot;40976&amp;quot;          
+## [133] &amp;quot;40977&amp;quot;           &amp;quot;40981&amp;quot;           &amp;quot;40982&amp;quot;          
+## [136] &amp;quot;40983&amp;quot;           &amp;quot;40984&amp;quot;           &amp;quot;40988&amp;quot;          
+## [139] &amp;quot;40989&amp;quot;           &amp;quot;40990&amp;quot;           &amp;quot;40991&amp;quot;          
+## [142] &amp;quot;40995&amp;quot;           &amp;quot;40996&amp;quot;           &amp;quot;40997&amp;quot;          
+## [145] &amp;quot;40998&amp;quot;           &amp;quot;41002&amp;quot;           &amp;quot;41003&amp;quot;          
+## [148] &amp;quot;41004&amp;quot;           &amp;quot;41005&amp;quot;           &amp;quot;41009&amp;quot;          
+## [151] &amp;quot;41010&amp;quot;           &amp;quot;41011&amp;quot;           &amp;quot;41012&amp;quot;          
+## [154] &amp;quot;41016&amp;quot;           &amp;quot;41017&amp;quot;           &amp;quot;41018&amp;quot;          
+## [157] &amp;quot;41019&amp;quot;           &amp;quot;41023&amp;quot;           &amp;quot;41024&amp;quot;          
+## [160] &amp;quot;41025&amp;quot;           &amp;quot;41030&amp;quot;           &amp;quot;41031&amp;quot;          
+## [163] &amp;quot;41032&amp;quot;           &amp;quot;41033&amp;quot;           &amp;quot;41037&amp;quot;          
+## [166] &amp;quot;41038&amp;quot;           &amp;quot;41039&amp;quot;           &amp;quot;41040&amp;quot;          
+## [169] &amp;quot;41044&amp;quot;           &amp;quot;41045&amp;quot;           &amp;quot;41046&amp;quot;          
+## [172] &amp;quot;41047&amp;quot;           &amp;quot;41051&amp;quot;           &amp;quot;41052&amp;quot;          
+## [175] &amp;quot;41053&amp;quot;           &amp;quot;41054&amp;quot;           &amp;quot;41055&amp;quot;          
+## [178] &amp;quot;41059&amp;quot;           &amp;quot;41060&amp;quot;           &amp;quot;41061&amp;quot;          
+## [181] &amp;quot;41065&amp;quot;           &amp;quot;41066&amp;quot;           &amp;quot;41067&amp;quot;          
+## [184] &amp;quot;41068&amp;quot;           &amp;quot;41100&amp;quot;           &amp;quot;41101&amp;quot;          
+## [187] &amp;quot;41102&amp;quot;           &amp;quot;41103&amp;quot;           &amp;quot;41107&amp;quot;          
+## [190] &amp;quot;41108&amp;quot;           &amp;quot;41110&amp;quot;           &amp;quot;41114&amp;quot;          
+## [193] &amp;quot;41115&amp;quot;           &amp;quot;41116&amp;quot;           &amp;quot;41117&amp;quot;          
+## [196] &amp;quot;41121&amp;quot;           &amp;quot;41122&amp;quot;           &amp;quot;41123&amp;quot;          
+## [199] &amp;quot;41124&amp;quot;           &amp;quot;41128&amp;quot;           &amp;quot;41129&amp;quot;          
+## [202] &amp;quot;41130&amp;quot;           &amp;quot;41131&amp;quot;           &amp;quot;41135&amp;quot;          
+## [205] &amp;quot;41136&amp;quot;           &amp;quot;41137&amp;quot;           &amp;quot;41138&amp;quot;          
+## [208] &amp;quot;41142&amp;quot;           &amp;quot;41143&amp;quot;           &amp;quot;41144&amp;quot;          
+## [211] &amp;quot;41145&amp;quot;           &amp;quot;41149&amp;quot;           &amp;quot;41150&amp;quot;          
+## [214] &amp;quot;41163&amp;quot;           &amp;quot;41164&amp;quot;           &amp;quot;41166&amp;quot;          
+## [217] &amp;quot;41171&amp;quot;           &amp;quot;41172&amp;quot;           &amp;quot;41173&amp;quot;          
+## [220] &amp;quot;41177&amp;quot;           &amp;quot;41178&amp;quot;           &amp;quot;41179&amp;quot;          
+## [223] &amp;quot;41180&amp;quot;           &amp;quot;41184&amp;quot;           &amp;quot;41185&amp;quot;          
+## [226] &amp;quot;41186&amp;quot;           &amp;quot;41187&amp;quot;           &amp;quot;41191&amp;quot;          
+## [229] &amp;quot;41192&amp;quot;           &amp;quot;41193&amp;quot;           &amp;quot;41194&amp;quot;          
+## [232] &amp;quot;41195&amp;quot;           &amp;quot;41196&amp;quot;           &amp;quot;41198&amp;quot;          
+## [235] &amp;quot;41199&amp;quot;           &amp;quot;41200&amp;quot;           &amp;quot;41201&amp;quot;          
+## [238] &amp;quot;41205&amp;quot;           &amp;quot;41206&amp;quot;           &amp;quot;41207&amp;quot;          
+## [241] &amp;quot;41208&amp;quot;           &amp;quot;41212&amp;quot;           &amp;quot;41213&amp;quot;          
+## [244] &amp;quot;41214&amp;quot;           &amp;quot;41215&amp;quot;           &amp;quot;41254&amp;quot;          
+## [247] &amp;quot;41255&amp;quot;           &amp;quot;41256&amp;quot;           &amp;quot;41291&amp;quot;          
+## [250] &amp;quot;41292&amp;quot;           &amp;quot;41296&amp;quot;           &amp;quot;41298&amp;quot;          
+## [253] &amp;quot;41299&amp;quot;           &amp;quot;41303&amp;quot;           &amp;quot;41305&amp;quot;          
+## [256] &amp;quot;41306&amp;quot;           &amp;quot;41310&amp;quot;           &amp;quot;41311&amp;quot;          
+## [259] &amp;quot;41312&amp;quot;           &amp;quot;41313&amp;quot;           &amp;quot;41317&amp;quot;          
+## [262] &amp;quot;41318&amp;quot;           &amp;quot;41319&amp;quot;           &amp;quot;41320&amp;quot;          
+## [265] &amp;quot;41353&amp;quot;           &amp;quot;41354&amp;quot;           &amp;quot;41355&amp;quot;          
+## [268] &amp;quot;41401&amp;quot;           &amp;quot;41402&amp;quot;           &amp;quot;6/8/11&amp;quot;         
+## [271] &amp;quot;9&amp;quot;               &amp;quot;Date&amp;quot;            &amp;quot;Date: 5/25/2011&amp;quot;
+## [274] &amp;quot;Date: 5/26/2011&amp;quot; &amp;quot;Date: 5/27/2011&amp;quot; &amp;quot;Date: 6/01/2011&amp;quot;
+## [277] &amp;quot;Date: 6/01/2012&amp;quot; &amp;quot;Date: 6/01/2013&amp;quot; &amp;quot;Date: 6/01/2014&amp;quot;
+## [280] &amp;quot;Date:09/08/2011&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We see from this list that in addition to the numerical dates encoded for Excel several other formats are also represented. We want to pay particular attention to two types of formats: 1. where the cell is empty and 2. where the cell contains actual dates but which are written in text format. We will replace empty cells with the string “NA” so that regular expressions will work when we use the &lt;code&gt;stringr&lt;/code&gt; package in subsequent steps. We will re-format dates that are coded as text into a standard format and then use the &lt;strong&gt;as.date()&lt;/strong&gt; function to convert them into a date object. Finally we will convert the Excel-formatted dates and merge all data to build a final table.&lt;/p&gt;
+&lt;p&gt;In the following snippet we change the missing data to “NA” and then fix the dates coded as text.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(stringr)
+# replace missing dates with NA
+suppl &amp;lt;- suppl %&amp;gt;% 
+  mutate(DATE=replace_na(DATE,&amp;quot;NA&amp;quot;))
+
+# copy text formatted dates to a separate table
+suppl_date &amp;lt;- suppl %&amp;gt;% 
+  filter(str_detect(DATE,&amp;quot;[0-9]/&amp;quot;)) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE &amp;lt;- gsub(&amp;quot;(20)([0-9][0-9])&amp;quot;, &amp;quot;\\2&amp;quot;, as.character(suppl_date$DATE))
+
+# remove the text &amp;quot;Date:&amp;quot; and convert to a date object
+suppl_date &amp;lt;- suppl_date %&amp;gt;% 
+  mutate(DATE=str_replace(DATE, &amp;quot;Date:&amp;quot;,&amp;quot;&amp;quot;)) %&amp;gt;% 
+  mutate(DATE=as.Date(DATE, format = &amp;quot;%m/%d/%y&amp;quot;))
+
+levels(as.factor(suppl_date$DATE))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;2011-05-25&amp;quot; &amp;quot;2011-05-26&amp;quot; &amp;quot;2011-05-27&amp;quot; &amp;quot;2011-06-01&amp;quot; &amp;quot;2011-06-08&amp;quot;
+## [6] &amp;quot;2011-09-08&amp;quot; &amp;quot;2012-06-01&amp;quot; &amp;quot;2013-06-01&amp;quot; &amp;quot;2014-06-01&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the next snippet we filter out the rows that we have already converted to dates and change the Excel encoded ones to R date objects. The cells that don’t contain dates will be coerced into NAs implying missing data.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;suppl &amp;lt;- suppl %&amp;gt;% 
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, &amp;quot;[0-9]/&amp;quot;)) %&amp;gt;% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = &amp;quot;1899-12-30&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now we can re-combine the two data tables into a single table with consistent date formatting.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;suppl &amp;lt;- bind_rows(suppl, suppl_date)
+
+levels(as.factor(suppl$DATE))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##   [1] &amp;quot;1900-01-08&amp;quot; &amp;quot;1906-10-23&amp;quot; &amp;quot;2011-01-11&amp;quot; &amp;quot;2011-01-18&amp;quot; &amp;quot;2011-01-19&amp;quot;
+##   [6] &amp;quot;2011-01-20&amp;quot; &amp;quot;2011-02-09&amp;quot; &amp;quot;2011-05-03&amp;quot; &amp;quot;2011-05-05&amp;quot; &amp;quot;2011-05-11&amp;quot;
+##  [11] &amp;quot;2011-05-12&amp;quot; &amp;quot;2011-05-13&amp;quot; &amp;quot;2011-05-19&amp;quot; &amp;quot;2011-05-25&amp;quot; &amp;quot;2011-05-26&amp;quot;
+##  [16] &amp;quot;2011-05-27&amp;quot; &amp;quot;2011-06-01&amp;quot; &amp;quot;2011-06-07&amp;quot; &amp;quot;2011-06-08&amp;quot; &amp;quot;2011-06-09&amp;quot;
+##  [21] &amp;quot;2011-06-14&amp;quot; &amp;quot;2011-06-15&amp;quot; &amp;quot;2011-06-16&amp;quot; &amp;quot;2011-06-17&amp;quot; &amp;quot;2011-06-21&amp;quot;
+##  [26] &amp;quot;2011-06-22&amp;quot; &amp;quot;2011-06-23&amp;quot; &amp;quot;2011-06-24&amp;quot; &amp;quot;2011-06-28&amp;quot; &amp;quot;2011-06-29&amp;quot;
+##  [31] &amp;quot;2011-06-30&amp;quot; &amp;quot;2011-07-01&amp;quot; &amp;quot;2011-07-06&amp;quot; &amp;quot;2011-07-07&amp;quot; &amp;quot;2011-07-08&amp;quot;
+##  [36] &amp;quot;2011-07-12&amp;quot; &amp;quot;2011-07-13&amp;quot; &amp;quot;2011-07-14&amp;quot; &amp;quot;2011-07-15&amp;quot; &amp;quot;2011-07-20&amp;quot;
+##  [41] &amp;quot;2011-07-21&amp;quot; &amp;quot;2011-07-22&amp;quot; &amp;quot;2011-07-26&amp;quot; &amp;quot;2011-07-27&amp;quot; &amp;quot;2011-07-28&amp;quot;
+##  [46] &amp;quot;2011-07-29&amp;quot; &amp;quot;2011-08-03&amp;quot; &amp;quot;2011-08-04&amp;quot; &amp;quot;2011-08-05&amp;quot; &amp;quot;2011-08-09&amp;quot;
+##  [51] &amp;quot;2011-08-10&amp;quot; &amp;quot;2011-08-11&amp;quot; &amp;quot;2011-08-12&amp;quot; &amp;quot;2011-08-17&amp;quot; &amp;quot;2011-08-18&amp;quot;
+##  [56] &amp;quot;2011-08-19&amp;quot; &amp;quot;2011-08-23&amp;quot; &amp;quot;2011-08-24&amp;quot; &amp;quot;2011-08-25&amp;quot; &amp;quot;2011-08-26&amp;quot;
+##  [61] &amp;quot;2011-08-31&amp;quot; &amp;quot;2011-09-01&amp;quot; &amp;quot;2011-09-02&amp;quot; &amp;quot;2011-09-07&amp;quot; &amp;quot;2011-09-08&amp;quot;
+##  [66] &amp;quot;2011-09-09&amp;quot; &amp;quot;2011-09-14&amp;quot; &amp;quot;2011-09-15&amp;quot; &amp;quot;2011-09-16&amp;quot; &amp;quot;2011-09-21&amp;quot;
+##  [71] &amp;quot;2011-09-22&amp;quot; &amp;quot;2011-09-23&amp;quot; &amp;quot;2011-09-28&amp;quot; &amp;quot;2011-09-29&amp;quot; &amp;quot;2011-09-30&amp;quot;
+##  [76] &amp;quot;2011-10-04&amp;quot; &amp;quot;2011-10-05&amp;quot; &amp;quot;2011-10-06&amp;quot; &amp;quot;2011-10-07&amp;quot; &amp;quot;2011-10-12&amp;quot;
+##  [81] &amp;quot;2011-10-13&amp;quot; &amp;quot;2011-10-14&amp;quot; &amp;quot;2011-10-18&amp;quot; &amp;quot;2011-10-19&amp;quot; &amp;quot;2011-10-20&amp;quot;
+##  [86] &amp;quot;2011-10-21&amp;quot; &amp;quot;2011-10-26&amp;quot; &amp;quot;2011-10-27&amp;quot; &amp;quot;2011-10-28&amp;quot; &amp;quot;2011-11-01&amp;quot;
+##  [91] &amp;quot;2011-11-02&amp;quot; &amp;quot;2011-11-03&amp;quot; &amp;quot;2011-11-04&amp;quot; &amp;quot;2011-11-09&amp;quot; &amp;quot;2011-11-10&amp;quot;
+##  [96] &amp;quot;2011-11-11&amp;quot; &amp;quot;2011-11-15&amp;quot; &amp;quot;2011-11-16&amp;quot; &amp;quot;2011-11-17&amp;quot; &amp;quot;2011-11-18&amp;quot;
+## [101] &amp;quot;2011-11-29&amp;quot; &amp;quot;2011-12-01&amp;quot; &amp;quot;2011-12-02&amp;quot; &amp;quot;2011-12-14&amp;quot; &amp;quot;2011-12-15&amp;quot;
+## [106] &amp;quot;2011-12-16&amp;quot; &amp;quot;2011-12-21&amp;quot; &amp;quot;2011-12-22&amp;quot; &amp;quot;2011-12-28&amp;quot; &amp;quot;2011-12-29&amp;quot;
+## [111] &amp;quot;2012-01-05&amp;quot; &amp;quot;2012-01-06&amp;quot; &amp;quot;2012-01-11&amp;quot; &amp;quot;2012-01-12&amp;quot; &amp;quot;2012-01-13&amp;quot;
+## [116] &amp;quot;2012-01-18&amp;quot; &amp;quot;2012-01-19&amp;quot; &amp;quot;2012-01-20&amp;quot; &amp;quot;2012-01-24&amp;quot; &amp;quot;2012-01-25&amp;quot;
+## [121] &amp;quot;2012-01-26&amp;quot; &amp;quot;2012-01-27&amp;quot; &amp;quot;2012-01-31&amp;quot; &amp;quot;2012-02-01&amp;quot; &amp;quot;2012-02-02&amp;quot;
+## [126] &amp;quot;2012-02-03&amp;quot; &amp;quot;2012-02-07&amp;quot; &amp;quot;2012-02-08&amp;quot; &amp;quot;2012-02-09&amp;quot; &amp;quot;2012-02-14&amp;quot;
+## [131] &amp;quot;2012-02-15&amp;quot; &amp;quot;2012-02-16&amp;quot; &amp;quot;2012-02-17&amp;quot; &amp;quot;2012-03-02&amp;quot; &amp;quot;2012-03-07&amp;quot;
+## [136] &amp;quot;2012-03-08&amp;quot; &amp;quot;2012-03-09&amp;quot; &amp;quot;2012-03-13&amp;quot; &amp;quot;2012-03-14&amp;quot; &amp;quot;2012-03-15&amp;quot;
+## [141] &amp;quot;2012-03-16&amp;quot; &amp;quot;2012-03-20&amp;quot; &amp;quot;2012-03-21&amp;quot; &amp;quot;2012-03-22&amp;quot; &amp;quot;2012-03-23&amp;quot;
+## [146] &amp;quot;2012-03-27&amp;quot; &amp;quot;2012-03-28&amp;quot; &amp;quot;2012-03-29&amp;quot; &amp;quot;2012-03-30&amp;quot; &amp;quot;2012-04-03&amp;quot;
+## [151] &amp;quot;2012-04-04&amp;quot; &amp;quot;2012-04-05&amp;quot; &amp;quot;2012-04-06&amp;quot; &amp;quot;2012-04-10&amp;quot; &amp;quot;2012-04-11&amp;quot;
+## [156] &amp;quot;2012-04-12&amp;quot; &amp;quot;2012-04-13&amp;quot; &amp;quot;2012-04-17&amp;quot; &amp;quot;2012-04-18&amp;quot; &amp;quot;2012-04-19&amp;quot;
+## [161] &amp;quot;2012-04-20&amp;quot; &amp;quot;2012-04-24&amp;quot; &amp;quot;2012-04-25&amp;quot; &amp;quot;2012-04-26&amp;quot; &amp;quot;2012-05-01&amp;quot;
+## [166] &amp;quot;2012-05-02&amp;quot; &amp;quot;2012-05-03&amp;quot; &amp;quot;2012-05-04&amp;quot; &amp;quot;2012-05-08&amp;quot; &amp;quot;2012-05-09&amp;quot;
+## [171] &amp;quot;2012-05-10&amp;quot; &amp;quot;2012-05-11&amp;quot; &amp;quot;2012-05-15&amp;quot; &amp;quot;2012-05-16&amp;quot; &amp;quot;2012-05-17&amp;quot;
+## [176] &amp;quot;2012-05-18&amp;quot; &amp;quot;2012-05-22&amp;quot; &amp;quot;2012-05-23&amp;quot; &amp;quot;2012-05-24&amp;quot; &amp;quot;2012-05-25&amp;quot;
+## [181] &amp;quot;2012-05-26&amp;quot; &amp;quot;2012-05-30&amp;quot; &amp;quot;2012-05-31&amp;quot; &amp;quot;2012-06-01&amp;quot; &amp;quot;2012-06-05&amp;quot;
+## [186] &amp;quot;2012-06-06&amp;quot; &amp;quot;2012-06-07&amp;quot; &amp;quot;2012-06-08&amp;quot; &amp;quot;2012-07-10&amp;quot; &amp;quot;2012-07-11&amp;quot;
+## [191] &amp;quot;2012-07-12&amp;quot; &amp;quot;2012-07-13&amp;quot; &amp;quot;2012-07-17&amp;quot; &amp;quot;2012-07-18&amp;quot; &amp;quot;2012-07-20&amp;quot;
+## [196] &amp;quot;2012-07-24&amp;quot; &amp;quot;2012-07-25&amp;quot; &amp;quot;2012-07-26&amp;quot; &amp;quot;2012-07-27&amp;quot; &amp;quot;2012-07-31&amp;quot;
+## [201] &amp;quot;2012-08-01&amp;quot; &amp;quot;2012-08-02&amp;quot; &amp;quot;2012-08-03&amp;quot; &amp;quot;2012-08-07&amp;quot; &amp;quot;2012-08-08&amp;quot;
+## [206] &amp;quot;2012-08-09&amp;quot; &amp;quot;2012-08-10&amp;quot; &amp;quot;2012-08-14&amp;quot; &amp;quot;2012-08-15&amp;quot; &amp;quot;2012-08-16&amp;quot;
+## [211] &amp;quot;2012-08-17&amp;quot; &amp;quot;2012-08-21&amp;quot; &amp;quot;2012-08-22&amp;quot; &amp;quot;2012-08-23&amp;quot; &amp;quot;2012-08-24&amp;quot;
+## [216] &amp;quot;2012-08-28&amp;quot; &amp;quot;2012-08-29&amp;quot; &amp;quot;2012-09-11&amp;quot; &amp;quot;2012-09-12&amp;quot; &amp;quot;2012-09-14&amp;quot;
+## [221] &amp;quot;2012-09-19&amp;quot; &amp;quot;2012-09-20&amp;quot; &amp;quot;2012-09-21&amp;quot; &amp;quot;2012-09-25&amp;quot; &amp;quot;2012-09-26&amp;quot;
+## [226] &amp;quot;2012-09-27&amp;quot; &amp;quot;2012-09-28&amp;quot; &amp;quot;2012-10-02&amp;quot; &amp;quot;2012-10-03&amp;quot; &amp;quot;2012-10-04&amp;quot;
+## [231] &amp;quot;2012-10-05&amp;quot; &amp;quot;2012-10-09&amp;quot; &amp;quot;2012-10-10&amp;quot; &amp;quot;2012-10-11&amp;quot; &amp;quot;2012-10-12&amp;quot;
+## [236] &amp;quot;2012-10-13&amp;quot; &amp;quot;2012-10-14&amp;quot; &amp;quot;2012-10-16&amp;quot; &amp;quot;2012-10-17&amp;quot; &amp;quot;2012-10-18&amp;quot;
+## [241] &amp;quot;2012-10-19&amp;quot; &amp;quot;2012-10-23&amp;quot; &amp;quot;2012-10-24&amp;quot; &amp;quot;2012-10-25&amp;quot; &amp;quot;2012-10-26&amp;quot;
+## [246] &amp;quot;2012-10-30&amp;quot; &amp;quot;2012-10-31&amp;quot; &amp;quot;2012-11-01&amp;quot; &amp;quot;2012-11-02&amp;quot; &amp;quot;2012-12-11&amp;quot;
+## [251] &amp;quot;2012-12-12&amp;quot; &amp;quot;2012-12-13&amp;quot; &amp;quot;2013-01-17&amp;quot; &amp;quot;2013-01-18&amp;quot; &amp;quot;2013-01-22&amp;quot;
+## [256] &amp;quot;2013-01-24&amp;quot; &amp;quot;2013-01-25&amp;quot; &amp;quot;2013-01-29&amp;quot; &amp;quot;2013-01-31&amp;quot; &amp;quot;2013-02-01&amp;quot;
+## [261] &amp;quot;2013-02-05&amp;quot; &amp;quot;2013-02-06&amp;quot; &amp;quot;2013-02-07&amp;quot; &amp;quot;2013-02-08&amp;quot; &amp;quot;2013-02-12&amp;quot;
+## [266] &amp;quot;2013-02-13&amp;quot; &amp;quot;2013-02-14&amp;quot; &amp;quot;2013-02-15&amp;quot; &amp;quot;2013-03-20&amp;quot; &amp;quot;2013-03-21&amp;quot;
+## [271] &amp;quot;2013-03-22&amp;quot; &amp;quot;2013-05-07&amp;quot; &amp;quot;2013-05-08&amp;quot; &amp;quot;2013-06-01&amp;quot; &amp;quot;2014-06-01&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There are two sets of data points from the years 1900 and 1906 which clearly cannot be correct! We will leave them as is for now but these should be filtered out before conducting any time-dependent analysis.&lt;/p&gt;
+&lt;p&gt;Next we want to format the supplementary data to match the format of the significant_lines table that we constructed in the previous post. To do this we will change the column headers and also code the presence or absence of physical abnormality with “+” and “-” respectively. Originally I had thought about rounding the PI and SEM to two decimal places to match the data from the text of the article. However, the PI and SEM scores in the supplementary table are inconsistently rounded which may help us with subsetting the data later on so we will leave them in their current state for now.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;suppl&amp;lt;-suppl %&amp;gt;% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %&amp;gt;%
+  # mutate(primary_PI = round(primary_PI, 2)) %&amp;gt;% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %&amp;gt;%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == &amp;quot;Present&amp;quot;, &amp;quot;+&amp;quot;)) %&amp;gt;%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), &amp;quot;-&amp;quot;)) %&amp;gt;% 
+  arrange(vdrc_id)
+
+head(suppl, 10)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 10 x 5
+##    vdrc_id primary_PI primary_SEM date       physical_abnormality
+##      &amp;lt;dbl&amp;gt;      &amp;lt;dbl&amp;gt;       &amp;lt;dbl&amp;gt; &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;               
+##  1    3047      0.34       0.09   2011-07-29 -                   
+##  2    3424      0.299      0.147  2013-01-25 -                   
+##  3    5070      0.401      0.141  2012-06-08 -                   
+##  4    6212      0.274      0.102  2011-12-14 -                   
+##  5    7219      0.41       0.044  2012-10-23 -                   
+##  6    7220      0.120      0.127  2013-03-20 -                   
+##  7    9524      0.3        0.0614 2011-06-28 -                   
+##  8   10836      0.492      0.0697 2013-02-12 -                   
+##  9   11471      0.16       0.09   2011-07-28 -                   
+## 10   11784      0.43       0.11   2011-07-29 -&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The only identifiers in this table are VDRC Identifiers (&lt;em&gt;vdrc_id&lt;/em&gt;) which means we have to use additional resources to find the name of the targeted gene. We can add identifiers such as gene symbols, Entrez Gene IDs and Flybase IDs that will make it easier to use this data. The VDRC (Vienna Drosophila Resource Center) provides a complete list of their lines in a table that contains several useful identifiers: &lt;a href=&#34;https://stockcenter.vdrc.at/control/fullCatalogueExcel&#34; class=&#34;uri&#34;&gt;https://stockcenter.vdrc.at/control/fullCatalogueExcel&lt;/a&gt;. We will use the &lt;strong&gt;read_xls()&lt;/strong&gt; command from the &lt;code&gt;readxl&lt;/code&gt; package to load this file into a new dataframe. The &lt;strong&gt;read_xls()&lt;/strong&gt; command guesses the data types but for this file it had trouble recognizing the data types in two of the columns. It turns out that these columns contained no data for the lines used in this screen so we can skip those columns using the following command.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;VDRC &amp;lt;- read_xls(&amp;quot;Walkinshaw_data/REPORT_VdrcCatalogue.xls&amp;quot;, 
+                 col_types = c(&amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;,
+                               &amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,
+                               &amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;skip&amp;quot;,&amp;quot;skip&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;))
+
+glimpse(VDRC)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 33,286
+## Variables: 13
+## $ `vdrc id`       &amp;lt;dbl&amp;gt; 836, 837, 839, 841, 842, 843, 845, 846, 848, 849…
+## $ `construct id`  &amp;lt;dbl&amp;gt; 37, 37, 38, 44, 45, 45, 47, 47, 49, 49, 51, 52, …
+## $ library         &amp;lt;chr&amp;gt; &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, …
+## $ `cg number`     &amp;lt;chr&amp;gt; &amp;quot;CG5819&amp;quot;, &amp;quot;CG5819&amp;quot;, &amp;quot;CG7121&amp;quot;, &amp;quot;CG4007&amp;quot;, &amp;quot;CG14396…
+## $ `on targets`    &amp;lt;dbl&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
+## $ `off targets`   &amp;lt;dbl&amp;gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, …
+## $ s19             &amp;lt;dbl&amp;gt; 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, …
+## $ `can repeats`   &amp;lt;dbl&amp;gt; 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, …
+## $ viability       &amp;lt;chr&amp;gt; &amp;quot;viable&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;sterile&amp;quot;, &amp;quot;steril…
+## $ `chromosome nr` &amp;lt;dbl&amp;gt; 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 3, 1, 3, 2, …
+## $ status          &amp;lt;chr&amp;gt; &amp;quot;available&amp;quot;, &amp;quot;unavailable&amp;quot;, &amp;quot;available&amp;quot;, &amp;quot;unavai…
+## $ `fb numbers`    &amp;lt;chr&amp;gt; &amp;quot;\nFBgn0034717&amp;quot;, &amp;quot;FBgn0034717&amp;quot;, &amp;quot;FBgn0026760&amp;quot;, &amp;quot;…
+## $ synonyms        &amp;lt;chr&amp;gt; &amp;quot;\ntartan/capricious-like\nCT18212\n5819&amp;quot;, &amp;quot;5819…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There are 33286 lines in the dataset and a number of identifiers are available for each of them. However, many of them, such as the FlyBase Gene (FBgn) and gene name identifiers, can be unstable and this table lists a number of synonyms including ones that have been discarded. On the other hand only a single CG number is listed per line which we can later use in conjunction with the Ensembl BioMart webservice from the European Bioinformatics Institute (EBI) to add the current versions of the other identifiers. So for the time being we will discard the FBgn numbers and synonyms encoded by the last two columns of the dataframe and rename other columns so that they match the tables from the article. We will then use an inner join to combine the two datasets but discard all rows of the VDRC data that don’t have a counterpart in the supplementary data from the paper.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;all_lines&amp;lt;-VDRC %&amp;gt;% 
+  dplyr::select(1:11) %&amp;gt;% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %&amp;gt;% 
+  dplyr::inner_join(suppl, by=&amp;quot;vdrc_id&amp;quot;)
+
+glimpse(all_lines)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 3,206
+## Variables: 15
+## $ vdrc_id              &amp;lt;dbl&amp;gt; 3047, 3424, 5070, 6212, 7219, 7220, 10836, …
+## $ construct_id         &amp;lt;dbl&amp;gt; 2537, 394, 2336, 1469, 715, 715, 4401, 732,…
+## $ lib                  &amp;lt;chr&amp;gt; &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;…
+## $ cg_number            &amp;lt;chr&amp;gt; &amp;quot;CG17348&amp;quot;, &amp;quot;CG8451&amp;quot;, &amp;quot;CG8339&amp;quot;, &amp;quot;CG33956&amp;quot;, &amp;quot;…
+## $ on_targets           &amp;lt;dbl&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ off_targets          &amp;lt;dbl&amp;gt; 0, 0, 0, 1, 1, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0…
+## $ s19                  &amp;lt;dbl&amp;gt; 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.99, 1…
+## $ can_repeats          &amp;lt;dbl&amp;gt; 2, 2, 2, 3, 2, 2, 5, 3, 3, 2, 2, 3, 4, 2, 2…
+## $ viability            &amp;lt;chr&amp;gt; &amp;quot;viable&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;lethal&amp;quot;, &amp;quot;vi…
+## $ chromosome_nr        &amp;lt;dbl&amp;gt; 2, 3, 3, 3, 3, 3, 2, 2, 1, 3, 2, 2, 2, 3, 3…
+## $ status               &amp;lt;chr&amp;gt; &amp;quot;available&amp;quot;, &amp;quot;available&amp;quot;, &amp;quot;available&amp;quot;, &amp;quot;ava…
+## $ primary_PI           &amp;lt;dbl&amp;gt; 0.34000000, 0.29904285, 0.40079441, 0.27353…
+## $ primary_SEM          &amp;lt;dbl&amp;gt; 0.09000000, 0.14749334, 0.14076967, 0.10236…
+## $ date                 &amp;lt;date&amp;gt; 2011-07-29, 2013-01-25, 2012-06-08, 2011-1…
+## $ physical_abnormality &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next we will use the biomart service of EBI to get current Entrez Gene IDs, FlyBase numbers and gene symbols using the list of CG numbers from the all_lines dataframe. The &lt;code&gt;biomaRt&lt;/code&gt; package allows very convenient programmatic access to BioMart.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(biomaRt)
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart=&amp;quot;ensembl&amp;quot;, dataset=&amp;quot;dmelanogaster_gene_ensembl&amp;quot;,
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+genenames &amp;lt;- getBM(attributes=c(&amp;#39;external_gene_name&amp;#39;,&amp;#39;entrezgene&amp;#39;,&amp;#39;flybase_gene_id&amp;#39;,
+                                &amp;#39;flybasecgid_gene&amp;#39;), filters = &amp;#39;flybasecgid_gene&amp;#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let’s check the size of the genenames dataframe to get an idea if we were able to map every identifier. First we will check how many unique CG numbers there are in the Walkinshaw dataset:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;all_lines$cg_number %&amp;gt;% 
+  unique() %&amp;gt;% 
+  length()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 2999&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now we want to check how many ids we got from genenames:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;dim(genenames)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 3020    4&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It is odd that we have 3020 identifiers from genenames compared to 2999 that we expected so we definitely want to see which CG numbers are being mapped to multiple identifiers. First we will look for CG numbers that are duplicated and store them in a vector called dup. Next we will filter the genenames dataframe to find rows which have duplicated CG ids:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;dup&amp;lt;-
+  genenames[which(duplicated(genenames$flybasecgid_gene)==TRUE),]$flybasecgid_gene
+
+dplyr::filter(genenames, flybasecgid_gene %in% dup)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    external_gene_name entrezgene flybase_gene_id flybasecgid_gene
+## 1            Lcp65Ab2      48382     FBgn0020643          CG18773
+## 2            Lcp65Ab2      48381     FBgn0020643          CG18773
+## 3        His3:CG31613    3772163     FBgn0051613          CG31613
+## 4        His3:CG31613    3772198     FBgn0051613          CG31613
+## 5        His3:CG31613    3772374     FBgn0051613          CG31613
+## 6        His3:CG31613    3772173     FBgn0051613          CG31613
+## 7        His3:CG31613    3772032     FBgn0051613          CG31613
+## 8        His3:CG31613    3771771     FBgn0051613          CG31613
+## 9        His3:CG31613    3771959     FBgn0051613          CG31613
+## 10       His3:CG31613    3772421     FBgn0051613          CG31613
+## 11       His3:CG31613    3772607     FBgn0051613          CG31613
+## 12       His3:CG31613    3772517     FBgn0051613          CG31613
+## 13       His3:CG31613    3772231     FBgn0051613          CG31613
+## 14       His3:CG31613     318847     FBgn0051613          CG31613
+## 15       His3:CG31613    3772149     FBgn0051613          CG31613
+## 16       His3:CG31613    3772189     FBgn0051613          CG31613
+## 17       His3:CG31613    3772552     FBgn0051613          CG31613
+## 18       His3:CG31613    3771723     FBgn0051613          CG31613
+## 19       His3:CG31613    3772191     FBgn0051613          CG31613
+## 20       His3:CG31613    3772370     FBgn0051613          CG31613
+## 21       His3:CG31613    3772619     FBgn0051613          CG31613
+## 22       His3:CG31613    3771792     FBgn0051613          CG31613
+## 23       His3:CG31613    3772518     FBgn0051613          CG31613
+## 24       His3:CG31613    3771729     FBgn0051613          CG31613
+## 25       His3:CG31613    3772489     FBgn0051613          CG31613&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There are two CG numbers that have multiple Entrez IDs. Let’s deal with CG31613 first. In Eukaryotes, that is organisms that have a nucleus, DNA is wrapped around structures called nucleosomes which are octamers that consist of 4 different histone proteins of which Histone3 is one. Since this is a highly abundant and necessary protein, there are a total of 23 genes that encode for it. Five of these genes, including CG31613 are present in a cluster on chromosome 2L. In the Walkinshaw screen, 5 lines were used to target this gene cluster but since they all have an identical DNA sequence, they used a single CG number to refer to these lines. The Entrez Gene IDs probably reflect this ambiguity. CG18773, the second ambiguous CG number encodes a cuticular protein for which there are two identical genes in the fly genome. We will deal with both of these CG numbers by removing the Entrez IDs since they add no significant information to the dataset.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# filter rows in genenames with CG ids not in the dup vector (note the ! operator)
+genenames &amp;lt;- dplyr::filter(genenames, !(flybasecgid_gene %in% dup))
+
+dim(genenames)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 2995    4&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The &lt;em&gt;genenames&lt;/em&gt; dataframe now has 2995 rows while the &lt;em&gt;all_lines&lt;/em&gt; dataframe has 2999. Taking into account that we removed CG18733 and CG31613, we should have 2997 rows in &lt;em&gt;genenames&lt;/em&gt;. We can check if there are any CG numbers that were not mapped by the BioMart webservice:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;all_lines$cg_number[(all_lines$cg_number %in% genenames$flybasecgid_gene)==FALSE]&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##  [1] &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot; 
+##  [8] &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot; 
+## [15] &amp;quot;CG40378&amp;quot; &amp;quot;CGnone&amp;quot;  &amp;quot;CG18773&amp;quot; &amp;quot;CG31613&amp;quot; &amp;quot;CG31613&amp;quot; &amp;quot;CG31613&amp;quot; &amp;quot;CG31613&amp;quot;
+## [22] &amp;quot;CG31613&amp;quot; &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot; 
+## [29] &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;  &amp;quot;CGnone&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There are indeed 2 CG numbers that were not mapped. One is called CGnone of which there are 24 instances and the other one is CG40378. The VDRC table shows that most of these lines are no longer available with one exception, 104930. I found the genomic DNA sequence for this construct on the &lt;a href=&#34;https://stockcenter.vdrc.at/control/main&#34;&gt;VDRC website&lt;/a&gt; and used BLAST on the &lt;a href=&#34;http://flybase.net/blast/&#34;&gt;FlyBase website&lt;/a&gt; to find where it mapped on the &lt;em&gt;Drosophila&lt;/em&gt; genome. It turns out this line targets a long non-coding RNA called lncRNA:CR13130. The other unmapped CG number, CG40378, has been changed to CG45781. We will change CG40378 to CG45781, for stock 104930 we will change CGnone to CR13130, remove the other rows with CGnone and use BioMart to fill in the rest of the information.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;all_lines &amp;lt;- mutate(all_lines, cg_number = ifelse(cg_number == &amp;quot;CG40378&amp;quot;, 
+                                                  &amp;quot;CG45781&amp;quot;, cg_number))
+all_lines &amp;lt;- mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  &amp;quot;CR13130&amp;quot;, cg_number))
+
+all_lines &amp;lt;- all_lines %&amp;gt;% 
+  filter(cg_number != &amp;quot;CGnone&amp;quot;)
+
+genenames &amp;lt;- getBM(attributes=c(&amp;#39;external_gene_name&amp;#39;,&amp;#39;flybase_gene_id&amp;#39;,
+                                &amp;#39;flybasecgid_gene&amp;#39;), filters = &amp;#39;flybasecgid_gene&amp;#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+dim(genenames)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 2999    3&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now we have the same number of unique rows in the &lt;em&gt;genenames&lt;/em&gt; dataframe as in the &lt;em&gt;all_lines&lt;/em&gt; dataframe. We can also confirm that we have removed all of the CGnone rows. We can add the gene symbols and flybase gene ids to the &lt;em&gt;all_lines&lt;/em&gt; dataframe using an inner join with the &lt;em&gt;genenames&lt;/em&gt; dataframe.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;all_lines &amp;lt;- inner_join(genenames, all_lines, by=c(&amp;quot;flybasecgid_gene&amp;quot;=&amp;quot;cg_number&amp;quot;)) %&amp;gt;% 
+  dplyr::select(4,1,2,3,5:19) %&amp;gt;% 
+  rename(cg_number=flybasecgid_gene)
+
+glimpse(all_lines)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 3,183
+## Variables: 19
+## $ vdrc_id              &amp;lt;dbl&amp;gt; 101031, 28150, 100587, 100007, 100226, 1002…
+## $ external_gene_name   &amp;lt;chr&amp;gt; &amp;quot;Zip71B&amp;quot;, &amp;quot;Galphai&amp;quot;, &amp;quot;emc&amp;quot;, &amp;quot;CG10137&amp;quot;, &amp;quot;x16…
+## $ flybase_gene_id      &amp;lt;chr&amp;gt; &amp;quot;FBgn0036461&amp;quot;, &amp;quot;FBgn0001104&amp;quot;, &amp;quot;FBgn0000575&amp;quot;…
+## $ cg_number            &amp;lt;chr&amp;gt; &amp;quot;CG10006&amp;quot;, &amp;quot;CG10060&amp;quot;, &amp;quot;CG1007&amp;quot;, &amp;quot;CG10137&amp;quot;, …
+## $ construct_id         &amp;lt;dbl&amp;gt; 106638, 12576, 108316, 102904, 107171, 1057…
+## $ library              &amp;lt;chr&amp;gt; &amp;quot;KK&amp;quot;, &amp;quot;GD&amp;quot;, &amp;quot;KK&amp;quot;, &amp;quot;KK&amp;quot;, &amp;quot;KK&amp;quot;, &amp;quot;KK&amp;quot;, &amp;quot;KK&amp;quot;, &amp;quot;…
+## $ on_targets           &amp;lt;dbl&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ off_targets          &amp;lt;dbl&amp;gt; 2, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0…
+## $ s19                  &amp;lt;dbl&amp;gt; 0.99, 1.00, 1.00, 0.99, 1.00, 1.00, 1.00, 1…
+## $ can_repeats          &amp;lt;dbl&amp;gt; 3, 2, 2, 2, 3, 3, 3, 3, 2, 3, 2, 3, 2, 2, 3…
+## $ viability            &amp;lt;chr&amp;gt; &amp;quot;viable&amp;quot;, &amp;quot;lethal&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;viable&amp;quot;, &amp;quot;vi…
+## $ chromosome_nr        &amp;lt;dbl&amp;gt; 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2…
+## $ status               &amp;lt;chr&amp;gt; &amp;quot;available&amp;quot;, &amp;quot;available&amp;quot;, &amp;quot;available&amp;quot;, &amp;quot;ava…
+## $ vector               &amp;lt;chr&amp;gt; &amp;quot;FBgn0036461&amp;quot;, &amp;quot;FBgn0001104&amp;quot;, &amp;quot;FBgn0010869\…
+## $ landing_site         &amp;lt;chr&amp;gt; &amp;quot;dZip71B\ncg10006\nZip71B\nZinc/iron regula…
+## $ primary_PI           &amp;lt;dbl&amp;gt; 0.4700000, 0.4900000, 0.3900000, 0.4398482,…
+## $ primary_SEM          &amp;lt;dbl&amp;gt; 0.03000000, 0.08100000, 0.04800000, 0.07489…
+## $ date                 &amp;lt;date&amp;gt; 2011-07-08, 2012-10-02, 2011-06-09, 2011-0…
+## $ physical_abnormality &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can collect the entire data cleaning code into a single script that we can source whenever we need to re-create the table.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(biomaRt)
+
+suppl&amp;lt;-readxl::read_excel(&amp;quot;/path/to/directory/Walkinshaw2015_suppl.xlsx&amp;quot;)
+
+
+# copy text formatted dates to a separate table
+suppl_date &amp;lt;- suppl %&amp;gt;% 
+  filter(str_detect(DATE,&amp;quot;[0-9]/&amp;quot;)) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE &amp;lt;- gsub(&amp;quot;(20)([0-9][0-9])&amp;quot;, &amp;quot;\\2&amp;quot;, as.character(suppl_date$DATE))
+
+# remove the text &amp;quot;Date:&amp;quot; and convert to a date object
+suppl_date &amp;lt;- suppl_date %&amp;gt;% 
+  mutate(DATE=str_replace(DATE, &amp;quot;Date:&amp;quot;,&amp;quot;&amp;quot;)) %&amp;gt;% 
+  mutate(DATE=as.Date(DATE, format = &amp;quot;%m/%d/%y&amp;quot;))
+
+suppl &amp;lt;- suppl %&amp;gt;% 
+  # replace missing dates with NA
+  mutate(DATE=replace_na(DATE,&amp;quot;NA&amp;quot;))
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, &amp;quot;[0-9]/&amp;quot;)) %&amp;gt;% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = &amp;quot;1899-12-30&amp;quot;)) %&amp;gt;% 
+  bind_rows(suppl_date) %&amp;gt;% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %&amp;gt;%
+  # mutate(primary_PI = round(primary_PI, 2)) %&amp;gt;% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %&amp;gt;%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == &amp;quot;Present&amp;quot;, &amp;quot;+&amp;quot;)) %&amp;gt;%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), &amp;quot;-&amp;quot;)) %&amp;gt;% 
+  arrange(vdrc_id)
+  
+VDRC &amp;lt;- read_xls(&amp;quot;/path/to/directory/REPORT_VdrcCatalogue.xls&amp;quot;, 
+                 col_types = c(&amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;, &amp;quot;guess&amp;quot;,
+                               &amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,
+                               &amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;skip&amp;quot;,&amp;quot;skip&amp;quot;,&amp;quot;guess&amp;quot;,&amp;quot;guess&amp;quot;))
+
+all_lines&amp;lt;-VDRC %&amp;gt;% 
+  dplyr::select(1:11) %&amp;gt;% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %&amp;gt;% 
+  dplyr::inner_join(suppl, by=&amp;quot;vdrc_id&amp;quot;) %&amp;gt;% 
+  
+  mutate(all_lines, cg_number = ifelse(cg_number == &amp;quot;CG40378&amp;quot;, 
+                                                    &amp;quot;CG45781&amp;quot;, cg_number)) %&amp;gt;% 
+  mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  &amp;quot;CR13130&amp;quot;, cg_number)) %&amp;gt;% 
+  filter(cg_number != &amp;quot;CGnone&amp;quot;)
+
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart=&amp;quot;ensembl&amp;quot;, dataset=&amp;quot;dmelanogaster_gene_ensembl&amp;quot;,
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+
+genenames &amp;lt;- getBM(attributes=c(&amp;#39;external_gene_name&amp;#39;,&amp;#39;flybase_gene_id&amp;#39;,
+                                &amp;#39;flybasecgid_gene&amp;#39;), filters = &amp;#39;flybasecgid_gene&amp;#39;,
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+all_lines &amp;lt;- inner_join(genenames, all_lines, by=c(&amp;quot;flybasecgid_gene&amp;quot;=&amp;quot;cg_number&amp;quot;)) %&amp;gt;% 
+  dplyr::select(4,1,2,3,5:19) %&amp;gt;% 
+  rename(cg_number=flybasecgid_gene)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS  10.14.2
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] bindrcpp_0.2.2 stringr_1.3.1  readxl_1.2.0   tidyr_0.8.1   
+## [5] dplyr_0.7.6   
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.18     knitr_1.20       bindr_0.1.1      magrittr_1.5    
+##  [5] tidyselect_0.2.4 R6_2.2.2         rlang_0.3.0.1    fansi_0.4.0     
+##  [9] tools_3.5.1      xfun_0.3         utf8_1.1.4       cli_1.0.1       
+## [13] htmltools_0.3.6  yaml_2.2.0       rprojroot_1.3-2  digest_0.6.16   
+## [17] assertthat_0.2.0 tibble_2.0.0     crayon_1.3.4     bookdown_0.7    
+## [21] purrr_0.2.5      glue_1.3.0       evaluate_0.11    rmarkdown_1.10  
+## [25] blogdown_0.8     stringi_1.2.4    cellranger_1.1.0 compiler_3.5.1  
+## [29] pillar_1.3.1     backports_1.1.2  pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;References&lt;/h3&gt;
+&lt;p&gt;Stat454
+Variance Explained
+Stack Overflow&lt;/p&gt;
+&lt;hr /&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Cleaning the Walkinshaw dataset. Part I</title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-i/</link>
+      <pubDate>Tue, 01 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-i/</guid>
+      <description>
+
+
+&lt;p&gt;In 2015, the Davis lab published a genome-wide screen of genes involved in memory using 3207 RNAi lines from the VDRC collection &lt;a href=&#34;http://www.genetics.org/content/199/4/1173&#34;&gt;(Walkinshaw et al. 2015 Genetics 199(4):1173-1182)&lt;/a&gt;. They generously published the their entire primary dataset including the scores for the lines that didn’t show an effect as well as those that did. The data is split across several tables in the paper itself as well as in the supplementary data and some of the identifiers are not standard. In this post I will document how I went about scraping the tables from the PDF of the paper and merging it with the supplementary data to generate a single table with programmatically updated identifiers. I have also provided the data cleaning script as a standalone text file. However, I don’t make any guarantees as to the correctness of the final product and so you should use it with an appropriate level of caution.&lt;/p&gt;
+&lt;p&gt;The &lt;a href=&#34;http://www.genetics.org/content/genetics/199/4/1173.full.pdf&#34;&gt;paper&lt;/a&gt; itself is available for free download from the Genetics website. I saved my copy as Walkinshaw2015.pdf in a directory called Walkinshaw_data in my project directory but you can store it anywhere that is convenient and just remember to write out the appropriate paths. From this document we will scrape data from two tables: 1. Table 2 contains genes whose disruption leads to an enhancement in the memory score AKA performance index (PI) and which were confirmed in a secondary screen, 2. Supplementary Table S2 lists the genes whose knock-down caused a decrease in the PI. The &lt;code&gt;tabulizer&lt;/code&gt; package from rOpenSci makes it very easy to perform this task by providing a convenient API to the Java Tabula package for extracting tables from PDFs.&lt;/p&gt;
+&lt;p&gt;The following code snippet extracts the table on page 5 of the PDF.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tabulizer)
+increasedPI &amp;lt;- tabulizer::extract_tables(&amp;quot;Walkinshaw_data/Walkinshaw2015.pdf&amp;quot;,
+                                         pages=5) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The output of the &lt;strong&gt;extract_tables()&lt;/strong&gt; command is a list of character matrices where each matrix contains the data from one page of the table. Since Table 2 is entirely contained within one page we can check its formatting by printing the first few rows of the first (and only) element of the list.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;head(increasedPI[[1]], 10)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##       [,1]           [,2]      [,3]                                
+##  [1,] &amp;quot;Transformant&amp;quot; &amp;quot;&amp;quot;        &amp;quot;&amp;quot;                                  
+##  [2,] &amp;quot;ID&amp;quot;           &amp;quot;CG no.&amp;quot;  &amp;quot;Drosophila gene&amp;quot;                   
+##  [3,] &amp;quot;100151&amp;quot;       &amp;quot;CG10483&amp;quot; &amp;quot;CG10483&amp;quot;                           
+##  [4,] &amp;quot;100363&amp;quot;       &amp;quot;CG42614&amp;quot; &amp;quot;scribble&amp;quot;                          
+##  [5,] &amp;quot;100624&amp;quot;       &amp;quot;CG13521&amp;quot; &amp;quot;roundabout&amp;quot;                        
+##  [6,] &amp;quot;100706&amp;quot;       &amp;quot;CG1470&amp;quot;  &amp;quot;Guanylyl cyclase b-subunit at 100B&amp;quot;
+##  [7,] &amp;quot;100721&amp;quot;       &amp;quot;CG11326&amp;quot; &amp;quot;Thrombospondin&amp;quot;                    
+##  [8,] &amp;quot;100727&amp;quot;       &amp;quot;CG8715&amp;quot;  &amp;quot;lingerer&amp;quot;                          
+##  [9,] &amp;quot;101189&amp;quot;       &amp;quot;CG42244&amp;quot; &amp;quot;Octb3R&amp;quot;                            
+## [10,] &amp;quot;102058&amp;quot;       &amp;quot;CG1128&amp;quot;  &amp;quot;a-Esterase-9&amp;quot;                      
+##       [,4]              [,5]              [,6]          [,7]           
+##  [1,] &amp;quot;Primary&amp;quot;         &amp;quot;Secondary&amp;quot;       &amp;quot;Physical&amp;quot;    &amp;quot;Mean activity&amp;quot;
+##  [2,] &amp;quot;PI and SEM line&amp;quot; &amp;quot;PI and SEM line&amp;quot; &amp;quot;abnormality&amp;quot; &amp;quot;difference&amp;quot;   
+##  [3,] &amp;quot;0.64 6 0.10&amp;quot;     &amp;quot;0.62 6 0.03&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;211.66&amp;quot;       
+##  [4,] &amp;quot;0.85 6 0.04&amp;quot;     &amp;quot;0.63 6 0.04&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;7.40&amp;quot;         
+##  [5,] &amp;quot;0.55 6 0.06&amp;quot;     &amp;quot;0.61 6 0.06&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;23.13&amp;quot;        
+##  [6,] &amp;quot;0.62 6 0.07&amp;quot;     &amp;quot;0.61 6 0.02&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;24.07&amp;quot;        
+##  [7,] &amp;quot;0.65 6 0.07&amp;quot;     &amp;quot;0.53 6 0.10&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;4.62&amp;quot;         
+##  [8,] &amp;quot;0.65 6 0.12&amp;quot;     &amp;quot;0.54 6 0.03&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;29.81&amp;quot;        
+##  [9,] &amp;quot;0.67 6 0.03&amp;quot;     &amp;quot;0.6 6 0.08&amp;quot;      &amp;quot;—&amp;quot;           &amp;quot;20.38&amp;quot;        
+## [10,] &amp;quot;0.65 6 0.04&amp;quot;     &amp;quot;0.60 6 0.04&amp;quot;     &amp;quot;—&amp;quot;           &amp;quot;2.12&amp;quot;         
+##       [,8]  
+##  [1,] &amp;quot;Act.&amp;quot;
+##  [2,] &amp;quot;sig.&amp;quot;
+##  [3,] &amp;quot;&amp;quot;    
+##  [4,] &amp;quot;&amp;quot;    
+##  [5,] &amp;quot;&amp;quot;    
+##  [6,] &amp;quot;&amp;quot;    
+##  [7,] &amp;quot;&amp;quot;    
+##  [8,] &amp;quot;***&amp;quot; 
+##  [9,] &amp;quot;&amp;quot;    
+## [10,] &amp;quot;&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There are a few things that are immediately obvious that need to be corrected:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;Information that should be restricted to one row is sometimes spread out over two rows. For example the column names are in rows 1 and 2.&lt;/li&gt;
+&lt;li&gt;Full gene names are used instead of standardized gene symbols.&lt;/li&gt;
+&lt;li&gt;The symbol for +/- is somehow converted to the number 6.&lt;/li&gt;
+&lt;li&gt;The PI and SEM should be in separate columns.&lt;/li&gt;
+&lt;li&gt;The PI and SEM are coded as character data types and should be numeric.&lt;/li&gt;
+&lt;li&gt;Absence of physical abnormality is coded by a non-standard character instead of “-”.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;We will wait to correct these issues until we have added the data for lines that showed a decrease in the memory score from Supplemental Table S2. In the meantime we will convert this table to a dataframe and add a column that indicates the sign of the change in memory relative to wildtype.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(dplyr)
+library(tidyr)
+df_increasedPI &amp;lt;- 
+  # convert to dataframe
+  as_data_frame(increasedPI[[1]]) %&amp;gt;% 
+  # Remove rows containing column names
+  slice(-1:-2) %&amp;gt;%
+  # Add proper column names
+  rename(vdrc_id=1, cg_number=2, gene_name=3, primary_score=4, 
+         secondary_score=5, physical_abnormality=6, 
+         mean_activity_difference=7, act_sig=8) %&amp;gt;% 
+  mutate(change_in_memory = &amp;quot;+&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next we repeat this process with Supplementary Table S2 which contains the data for lines where disrupting the gene product causes a reduction in the memory score or PI. We again use the &lt;code&gt;tabulizer&lt;/code&gt; package to read in the data but this time it is spread over several pages (pp. 13-38) of the Extended PDF. Looking at the first 10 rows of the first matrix of the output we notice that there are 18 columns, some of which have no elements.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;decreasedPI &amp;lt;- tabulizer::extract_tables(&amp;quot;Walkinshaw_data/Walkinshaw2015.pdf&amp;quot;, pages=13:38)
+head(decreasedPI[[1]], 10)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##       [,1]               [,2] [,3]        [,4] [,5]                [,6]
+##  [1,] &amp;quot;TRANSFORMANT  ID&amp;quot; &amp;quot;&amp;quot;   &amp;quot;CG NUMBER&amp;quot; &amp;quot;&amp;quot;   &amp;quot;DROSOPHILA GENE&amp;quot;   &amp;quot;&amp;quot;  
+##  [2,] &amp;quot;11471&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG33517&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;Dopamine 2-like&amp;quot;   &amp;quot;&amp;quot;  
+##  [3,] &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;   &amp;quot;&amp;quot;          &amp;quot;&amp;quot;   &amp;quot;receptor&amp;quot;          &amp;quot;&amp;quot;  
+##  [4,] &amp;quot;11817&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG42260&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;CG42260&amp;quot;           &amp;quot;&amp;quot;  
+##  [5,] &amp;quot;13140&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG31546&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;CG31546&amp;quot;           &amp;quot;&amp;quot;  
+##  [6,] &amp;quot;19124&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG2204&amp;quot;    &amp;quot;&amp;quot;   &amp;quot;G protein oα 47A&amp;quot;  &amp;quot;&amp;quot;  
+##  [7,] &amp;quot;26876&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG7485&amp;quot;    &amp;quot;&amp;quot;   &amp;quot;Octopamine-&amp;quot;       &amp;quot;&amp;quot;  
+##  [8,] &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;   &amp;quot;&amp;quot;          &amp;quot;&amp;quot;   &amp;quot;Tyramine receptor&amp;quot; &amp;quot;&amp;quot;  
+##  [9,] &amp;quot;37549&amp;quot;            &amp;quot;&amp;quot;   &amp;quot;CG6711&amp;quot;    &amp;quot;&amp;quot;   &amp;quot;TBP-associated&amp;quot;    &amp;quot;&amp;quot;  
+## [10,] &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;   &amp;quot;&amp;quot;          &amp;quot;&amp;quot;   &amp;quot;factor 2&amp;quot;          &amp;quot;&amp;quot;  
+##       [,7]                    [,8] [,9] [,10]                    [,11]
+##  [1,] &amp;quot;PRIMARY PI &amp;amp; SEM LINE&amp;quot; &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;SECONDARYPI &amp;amp; SEM LINE&amp;quot; &amp;quot;&amp;quot;   
+##  [2,] &amp;quot;0.16 ± 0.09&amp;quot;           &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.13 ± 0.10&amp;quot;            &amp;quot;&amp;quot;   
+##  [3,] &amp;quot;&amp;quot;                      &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;&amp;quot;                       &amp;quot;&amp;quot;   
+##  [4,] &amp;quot;0.05 ± 0.16&amp;quot;           &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.15 ± 0.13&amp;quot;            &amp;quot;&amp;quot;   
+##  [5,] &amp;quot;0.21 ± 0.15&amp;quot;           &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.15 ± 0.04&amp;quot;            &amp;quot;&amp;quot;   
+##  [6,] &amp;quot;-0.12 ± 0.08&amp;quot;          &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.15 ± 0.06&amp;quot;            &amp;quot;&amp;quot;   
+##  [7,] &amp;quot;0.25 ± 0.07&amp;quot;           &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.19 ± 0.14&amp;quot;            &amp;quot;&amp;quot;   
+##  [8,] &amp;quot;&amp;quot;                      &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;&amp;quot;                       &amp;quot;&amp;quot;   
+##  [9,] &amp;quot;0.15 ± 0.05&amp;quot;           &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;0.24 ± 0.14&amp;quot;            &amp;quot;&amp;quot;   
+## [10,] &amp;quot;&amp;quot;                      &amp;quot;&amp;quot;   &amp;quot;&amp;quot;   &amp;quot;&amp;quot;                       &amp;quot;&amp;quot;   
+##       [,12] [,13]              [,14] [,15]                 [,16] [,17]
+##  [1,] &amp;quot;&amp;quot;    &amp;quot;PHYSICAL ABNORM.&amp;quot; &amp;quot;&amp;quot;    &amp;quot;MEAN ACTIVITY DIFF.&amp;quot; &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [2,] &amp;quot;&amp;quot;    &amp;quot;-&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;-5.63&amp;quot;               &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [3,] &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                    &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [4,] &amp;quot;&amp;quot;    &amp;quot;+&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;NT&amp;quot;                  &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [5,] &amp;quot;&amp;quot;    &amp;quot;-&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;NT&amp;quot;                  &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [6,] &amp;quot;&amp;quot;    &amp;quot;+&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;NT&amp;quot;                  &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [7,] &amp;quot;&amp;quot;    &amp;quot;-&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;NT&amp;quot;                  &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [8,] &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                    &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##  [9,] &amp;quot;&amp;quot;    &amp;quot;-&amp;quot;                &amp;quot;&amp;quot;    &amp;quot;NT&amp;quot;                  &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+## [10,] &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                 &amp;quot;&amp;quot;    &amp;quot;&amp;quot;                    &amp;quot;&amp;quot;    &amp;quot;&amp;quot;   
+##       [,18]      
+##  [1,] &amp;quot;ACT. SIG.&amp;quot;
+##  [2,] &amp;quot;&amp;quot;         
+##  [3,] &amp;quot;&amp;quot;         
+##  [4,] &amp;quot;&amp;quot;         
+##  [5,] &amp;quot;&amp;quot;         
+##  [6,] &amp;quot;&amp;quot;         
+##  [7,] &amp;quot;&amp;quot;         
+##  [8,] &amp;quot;&amp;quot;         
+##  [9,] &amp;quot;&amp;quot;         
+## [10,] &amp;quot;&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We want to make sure that all of the matrices of the output list are uniform so we use &lt;strong&gt;sapply()&lt;/strong&gt; with the &lt;strong&gt;dim()&lt;/strong&gt; function to check the dimensions of each of the 26 matrices in the list. Each column in the output below encodes the data from a single matrix of the list with the row and column dimensions encoded in rows 1 and 2 respectively.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sapply(decreasedPI, dim)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   18   26   28   28   28   28   27   28   27    27    27    27    28
+## [2,]   18    8    8    8    8    8    8    8    8     8     8     8     8
+##      [,14] [,15] [,16] [,17] [,18] [,19] [,20] [,21] [,22] [,23] [,24]
+## [1,]    28    28    27    28    28    26    27    28    26    28    28
+## [2,]     8     8     8     8     8     8     8     8     8     8     8
+##      [,25] [,26]
+## [1,]    27    24
+## [2,]     8     8&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;From this output table we see that the first matrix has 18 columns but each of the other matrices have 8 columns each. We will define a custom function, &lt;strong&gt;dataframe_from_list()&lt;/strong&gt;, that removes empty columns from each matrix using the &lt;strong&gt;remove_empty_cols()&lt;/strong&gt; function of the &lt;code&gt;janitor&lt;/code&gt; package, converts missing data to NAs, and renames the columns.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(janitor)
+dataframe_from_list&amp;lt;-function(mylist){
+  data.frame(mylist, stringsAsFactors = FALSE) %&amp;gt;%
+    mutate_all(funs(na_if(.,&amp;quot;&amp;quot;))) %&amp;gt;% 
+    remove_empty(&amp;quot;cols&amp;quot;) %&amp;gt;% 
+    rename(vdrc_id=1, cg_number=2, gene_name=3, primary_score=4, 
+           secondary_score=5, physical_abnormality=6,
+           mean_activity_difference=7,act_sig=8)
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now we use &lt;strong&gt;lapply()&lt;/strong&gt; to apply this function to each element of the decreasedPI list of matrices and convert it to a list of dataframes. We will convert the list to a single dataframe with the &lt;strong&gt;bind_rows()&lt;/strong&gt; function from the tidyverse &lt;code&gt;dplyr&lt;/code&gt; package and add a new column called &lt;em&gt;change_in_memory&lt;/em&gt; with value “-” to indicate a decrease in memory.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_decreasedPI&amp;lt;-lapply(decreasedPI, dataframe_from_list)
+df_decreasedPI&amp;lt;-df_decreasedPI %&amp;gt;%
+  bind_rows() %&amp;gt;%
+  # Remove the first row containing column names
+  slice(-1) %&amp;gt;%
+  # Add column to indicate significant reduction in memory score
+  mutate(change_in_memory = &amp;quot;-&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Unlike the &lt;em&gt;increasedPI&lt;/em&gt; table not all cases in the &lt;em&gt;decreasedPI&lt;/em&gt; table have scores for changes in activity which suggests that this test wasn’t done for all lines. In our dataframe we have NAs in the &lt;em&gt;act_sig&lt;/em&gt; column in all cases where there isn’t a significant difference. In order to match the &lt;em&gt;df_increasedPI&lt;/em&gt; table we want to change the &lt;em&gt;act_sig&lt;/em&gt; column to have a null value in all cases that have a value in the mean_activity_difference column rather than an NA.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_decreasedPI&amp;lt;-df_decreasedPI %&amp;gt;% 
+  mutate(act_sig=if_else(!is.na(mean_activity_difference), &amp;quot;&amp;quot;, act_sig))
+
+head(df_decreasedPI, 10)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    vdrc_id cg_number          gene_name primary_score secondary_score
+## 1    11471   CG33517    Dopamine 2-like   0.16 ± 0.09     0.13 ± 0.10
+## 2     &amp;lt;NA&amp;gt;      &amp;lt;NA&amp;gt;           receptor          &amp;lt;NA&amp;gt;            &amp;lt;NA&amp;gt;
+## 3    11817   CG42260            CG42260   0.05 ± 0.16     0.15 ± 0.13
+## 4    13140   CG31546            CG31546   0.21 ± 0.15     0.15 ± 0.04
+## 5    19124    CG2204   G protein oα 47A  -0.12 ± 0.08     0.15 ± 0.06
+## 6    26876    CG7485        Octopamine-   0.25 ± 0.07     0.19 ± 0.14
+## 7     &amp;lt;NA&amp;gt;      &amp;lt;NA&amp;gt;  Tyramine receptor          &amp;lt;NA&amp;gt;            &amp;lt;NA&amp;gt;
+## 8    37549    CG6711     TBP-associated   0.15 ± 0.05     0.24 ± 0.14
+## 9     &amp;lt;NA&amp;gt;      &amp;lt;NA&amp;gt;           factor 2          &amp;lt;NA&amp;gt;            &amp;lt;NA&amp;gt;
+## 10   46757    CG3977 Copper transporter   0.23 ± 0.04     0.18 ± 0.03
+##    physical_abnormality mean_activity_difference act_sig change_in_memory
+## 1                     -                    -5.63                        -
+## 2                  &amp;lt;NA&amp;gt;                     &amp;lt;NA&amp;gt;    &amp;lt;NA&amp;gt;                -
+## 3                     +                       NT                        -
+## 4                     -                       NT                        -
+## 5                     +                       NT                        -
+## 6                     -                       NT                        -
+## 7                  &amp;lt;NA&amp;gt;                     &amp;lt;NA&amp;gt;    &amp;lt;NA&amp;gt;                -
+## 8                     -                       NT                        -
+## 9                  &amp;lt;NA&amp;gt;                     &amp;lt;NA&amp;gt;    &amp;lt;NA&amp;gt;                -
+## 10                    -                    11.51                        -&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can now combine the two dataframes for increased and decreased scores into a single one that we will call significant_lines.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI)
+
+glimpse(significant_lines)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 743
+## Variables: 9
+## $ vdrc_id                  &amp;lt;chr&amp;gt; &amp;quot;11471&amp;quot;, NA, &amp;quot;11817&amp;quot;, &amp;quot;13140&amp;quot;, &amp;quot;19124&amp;quot;,…
+## $ cg_number                &amp;lt;chr&amp;gt; &amp;quot;CG33517&amp;quot;, NA, &amp;quot;CG42260&amp;quot;, &amp;quot;CG31546&amp;quot;, &amp;quot;C…
+## $ gene_name                &amp;lt;chr&amp;gt; &amp;quot;Dopamine 2-like&amp;quot;, &amp;quot;receptor&amp;quot;, &amp;quot;CG42260…
+## $ primary_score            &amp;lt;chr&amp;gt; &amp;quot;0.16 ± 0.09&amp;quot;, NA, &amp;quot;0.05 ± 0.16&amp;quot;, &amp;quot;0.21…
+## $ secondary_score          &amp;lt;chr&amp;gt; &amp;quot;0.13 ± 0.10&amp;quot;, NA, &amp;quot;0.15 ± 0.13&amp;quot;, &amp;quot;0.15…
+## $ physical_abnormality     &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, NA, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, NA, &amp;quot;-&amp;quot;, N…
+## $ mean_activity_difference &amp;lt;chr&amp;gt; &amp;quot;-5.63&amp;quot;, NA, &amp;quot;NT&amp;quot;, &amp;quot;NT&amp;quot;, &amp;quot;NT&amp;quot;, &amp;quot;NT&amp;quot;, NA…
+## $ act_sig                  &amp;lt;chr&amp;gt; &amp;quot;&amp;quot;, NA, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, NA, &amp;quot;&amp;quot;, NA, &amp;quot;&amp;quot;,…
+## $ change_in_memory         &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;,…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the next chunk of code we will correct all of these problems using packages from the tidyverse. We will use the pipe operator &lt;strong&gt;%&amp;gt;%&lt;/strong&gt; from the &lt;code&gt;tidyr&lt;/code&gt; package to string together operations. What each element of the code does is commented in the code chunk below so I won’t break it down further here. For the time being we will remove the gene names from the table and add in standardized symbols from a public database in the next post.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;significant_lines &amp;lt;- significant_lines %&amp;gt;% 
+  # Put PI and SEM in separate columns 
+  separate(primary_score, c(&amp;quot;primary_PI&amp;quot;, &amp;quot;dummy&amp;quot;, &amp;quot;primary_SEM&amp;quot;), &amp;quot; &amp;quot;)%&amp;gt;%
+  dplyr::select(-dummy) %&amp;gt;%
+  separate(secondary_score, c(&amp;quot;secondary_PI&amp;quot;, &amp;quot;dummy&amp;quot;, &amp;quot;secondary_SEM&amp;quot;), &amp;quot; &amp;quot;) %&amp;gt;%
+  # remove +/- character and gene names
+  dplyr::select(-dummy, -gene_name) %&amp;gt;%
+  # Remove all rows that don&amp;#39;t have a valid vdrc_id
+  filter(vdrc_id != &amp;quot;&amp;quot;) %&amp;gt;%
+  # Encode physical abnormality by + or -
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality != &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;)) %&amp;gt;%
+  # convert VDRC identifiers to integers
+  mutate(vdrc_id = strtoi(vdrc_id)) %&amp;gt;%
+  # Convert PI and SEM to numeric
+  mutate(primary_PI = as.double(primary_PI), 
+         primary_SEM = abs(as.double(primary_SEM))) %&amp;gt;%
+  mutate(secondary_PI = as.double(secondary_PI), 
+         secondary_SEM = abs(as.double(secondary_SEM))) %&amp;gt;%
+  # Convert Mean Activity Difference to numeric and add column to indicate increase in memory
+  mutate(mean_activity_difference = as.double(mean_activity_difference)) %&amp;gt;% 
+  # Sort the dataframe by the VDRC identifier
+  arrange(vdrc_id)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now if we inspect the dataframe we see data for 599 lines and the scores are separated into separate columns.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;glimpse(significant_lines)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 599
+## Variables: 10
+## $ vdrc_id                  &amp;lt;int&amp;gt; 11471, 11817, 13140, 19124, 26876, 3754…
+## $ cg_number                &amp;lt;chr&amp;gt; &amp;quot;CG33517&amp;quot;, &amp;quot;CG42260&amp;quot;, &amp;quot;CG31546&amp;quot;, &amp;quot;CG220…
+## $ primary_PI               &amp;lt;dbl&amp;gt; 0.16, 0.05, 0.21, -0.12, 0.25, 0.15, 0.…
+## $ primary_SEM              &amp;lt;dbl&amp;gt; 0.09, 0.16, 0.15, 0.08, 0.07, 0.05, 0.0…
+## $ secondary_PI             &amp;lt;dbl&amp;gt; 0.13, 0.15, 0.15, 0.15, 0.19, 0.24, 0.1…
+## $ secondary_SEM            &amp;lt;dbl&amp;gt; 0.10, 0.13, 0.04, 0.06, 0.14, 0.14, 0.0…
+## $ physical_abnormality     &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;,…
+## $ mean_activity_difference &amp;lt;dbl&amp;gt; -5.63, NA, NA, NA, NA, NA, 11.51, NA, 2…
+## $ act_sig                  &amp;lt;chr&amp;gt; &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;,…
+## $ change_in_memory         &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;,…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can do some basic checks to see if our cleaned data matches the data in the publication. The paper indicates that 600 lines showed a significant change in memory scores which corresponds quite well with the 599 rows in our cleaned dataframe. Of the 600 lines 42 lines showed an increased PI. We can filter our dataframe with this information.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;significant_lines %&amp;gt;% 
+  dplyr::filter(change_in_memory==&amp;quot;+&amp;quot;) %&amp;gt;% 
+  glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 42
+## Variables: 10
+## $ vdrc_id                  &amp;lt;int&amp;gt; 100151, 100363, 100624, 100706, 100721,…
+## $ cg_number                &amp;lt;chr&amp;gt; &amp;quot;CG10483&amp;quot;, &amp;quot;CG42614&amp;quot;, &amp;quot;CG13521&amp;quot;, &amp;quot;CG147…
+## $ primary_PI               &amp;lt;dbl&amp;gt; 0.64, 0.85, 0.55, 0.62, 0.65, 0.65, 0.6…
+## $ primary_SEM              &amp;lt;dbl&amp;gt; 0.10, 0.04, 0.06, 0.07, 0.07, 0.12, 0.0…
+## $ secondary_PI             &amp;lt;dbl&amp;gt; 0.62, 0.63, 0.61, 0.61, 0.53, 0.54, 0.6…
+## $ secondary_SEM            &amp;lt;dbl&amp;gt; 0.03, 0.04, 0.06, 0.02, 0.10, 0.03, 0.0…
+## $ physical_abnormality     &amp;lt;chr&amp;gt; &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;, &amp;quot;-&amp;quot;,…
+## $ mean_activity_difference &amp;lt;dbl&amp;gt; 211.66, 7.40, 23.13, 24.07, 4.62, 29.81…
+## $ act_sig                  &amp;lt;chr&amp;gt; &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;***&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, …
+## $ change_in_memory         &amp;lt;chr&amp;gt; &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;, &amp;quot;+&amp;quot;,…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So our dataframe also has 42 lines that show an increased memory score matching the paper.&lt;/p&gt;
+&lt;p&gt;I have collected all of the data cleaning commands from this post in a script that is pasted below. You can source it to build the significant_lines dataframe. In the next post I will describe how to clean the supplemental table that contains the entire dataset of 3207 lines and update identifiers programmatically using the &lt;code&gt;biomaRt&lt;/code&gt; package to query the Ensembl BioMart webservice.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tabulizer)
+library(dplyr)
+library(tidyr)
+library(janitor)
+
+dataframe_from_list&amp;lt;-function(mylist){
+  data.frame(mylist, stringsAsFactors = FALSE) %&amp;gt;%
+    mutate_all(funs(na_if(.,&amp;quot;&amp;quot;))) %&amp;gt;% 
+    remove_empty(&amp;quot;cols&amp;quot;) %&amp;gt;% 
+    rename(vdrc_id=1, cg_number=2, gene_name=3, primary_score=4, 
+           secondary_score=5, physical_abnormality=6,
+           mean_activity_difference=7,act_sig=8)
+}
+  
+
+increasedPI &amp;lt;- tabulizer::extract_tables(&amp;quot;/path/to/directory/Walkinshaw2016.pdf&amp;quot;, 
+                                         pages=5) 
+# Extract Table 2 located on page 5 of the manuscript
+
+
+df_increasedPI &amp;lt;- 
+  # convert to dataframe
+  as_data_frame(increasedPI[[1]]) %&amp;gt;% 
+  # Remove rows containing column names
+  slice(-1:-2) %&amp;gt;%
+  # Add proper column names
+  dataframe_from_list() %&amp;gt;% 
+  # Add column to indicate sign of change in memory
+  mutate(change_in_memory = &amp;quot;+&amp;quot;)
+
+decreasedPI &amp;lt;- tabulizer::extract_tables(&amp;quot;/path/to/directory//Walkinshaw2016.pdf&amp;quot;, 
+                                         pages=13:38)
+
+df_decreasedPI&amp;lt;-lapply(decreasedPI, dataframe_from_list)
+df_decreasedPI&amp;lt;-df_decreasedPI %&amp;gt;%
+  bind_rows() %&amp;gt;% 
+  # Remove the first row containing column names
+  slice(-1) %&amp;gt;%
+  # Add column to indicate significant reduction in memory score
+  mutate(change_in_memory = &amp;quot;-&amp;quot;) %&amp;gt;% 
+  mutate(act_sig=if_else(!is.na(mean_activity_difference), &amp;quot;&amp;quot;, act_sig))
+ 
+
+significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI) %&amp;gt;% 
+  # Put PI and SEM in separate columns 
+  separate(primary_score, c(&amp;quot;primary_PI&amp;quot;, &amp;quot;dummy&amp;quot;, &amp;quot;primary_SEM&amp;quot;), &amp;quot; &amp;quot;)%&amp;gt;%
+  dplyr::select(-dummy) %&amp;gt;%
+  separate(secondary_score, c(&amp;quot;secondary_PI&amp;quot;, &amp;quot;dummy&amp;quot;, &amp;quot;secondary_SEM&amp;quot;), &amp;quot; &amp;quot;) %&amp;gt;%
+  # remove +/- character and gene names
+  dplyr::select(-dummy, -gene_name) %&amp;gt;%
+  # Remove all rows that don&amp;#39;t have a valid vdrc_id
+  filter(vdrc_id != &amp;quot;&amp;quot;) %&amp;gt;%
+  # Encode physical abnormality by + or -
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality != &amp;quot;+&amp;quot;, &amp;quot;-&amp;quot;)) %&amp;gt;%
+  # convert VDRC identifiers to integers
+  mutate(vdrc_id = strtoi(vdrc_id)) %&amp;gt;%
+  # Convert PI and SEM to numeric
+  mutate(primary_PI = as.double(primary_PI), 
+         primary_SEM = abs(as.double(primary_SEM))) %&amp;gt;%
+  mutate(secondary_PI = as.double(secondary_PI), 
+         secondary_SEM = abs(as.double(secondary_SEM))) %&amp;gt;%
+  # Convert Mean Activity Difference to numeric and add column to indicate increase in memory
+  mutate(mean_activity_difference = as.double(mean_activity_difference)) %&amp;gt;% 
+  # Sort the dataframe by the VDRC identifier
+  arrange(vdrc_id)&lt;/code&gt;&lt;/pre&gt;
+&lt;div id=&#34;session-info&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Session Info&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS  10.14.2
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] janitor_1.1.1   bindrcpp_0.2.2  tidyr_0.8.1     dplyr_0.7.6    
+## [5] tabulizer_0.2.2
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.18        knitr_1.20          bindr_0.1.1        
+##  [4] magrittr_1.5        tidyselect_0.2.4    R6_2.2.2           
+##  [7] rlang_0.3.0.1       fansi_0.4.0         stringr_1.3.1      
+## [10] tools_3.5.1         xfun_0.3            png_0.1-7          
+## [13] utf8_1.1.4          cli_1.0.1           htmltools_0.3.6    
+## [16] yaml_2.2.0          rprojroot_1.3-2     digest_0.6.16      
+## [19] assertthat_0.2.0    tibble_2.0.0        crayon_1.3.4       
+## [22] bookdown_0.7        rJava_0.9-10        purrr_0.2.5        
+## [25] glue_1.3.0          evaluate_0.11       rmarkdown_1.10     
+## [28] blogdown_0.8        stringi_1.2.4       pillar_1.3.1       
+## [31] compiler_3.5.1      tabulizerjars_1.0.1 backports_1.1.2    
+## [34] pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Example Page</title>
+      <link>/tutorial/example/</link>
+      <pubDate>Sun, 09 Sep 2018 00:00:00 -0700</pubDate>
+      
+      <guid>/tutorial/example/</guid>
+      <description>
+
+&lt;p&gt;In this tutorial, I&amp;rsquo;ll share my top 10 tips for getting started with Academic:&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-1&#34;&gt;Tip 1&lt;/h2&gt;
+
+&lt;p&gt;&amp;hellip;&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
+
+&lt;p&gt;&amp;hellip;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Example Talk</title>
+      <link>/talk/example/</link>
+      <pubDate>Sun, 01 Jan 2017 00:00:00 -0800</pubDate>
+      
+      <guid>/talk/example/</guid>
+      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;p&gt;Click on the &lt;strong&gt;Slides&lt;/strong&gt; button above to view the built-in slides feature.&lt;/p&gt;
+
+&lt;/div&gt;
+
+
+&lt;p&gt;Slides can be added in a few ways:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Create&lt;/strong&gt; slides using Academic&amp;rsquo;s &lt;em&gt;Slides&lt;/em&gt; feature and link using &lt;code&gt;url_slides&lt;/code&gt; parameter in the front matter of the talk file&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Upload&lt;/strong&gt; an existing slide deck to &lt;code&gt;static/&lt;/code&gt; and link using &lt;code&gt;url_slides&lt;/code&gt; parameter in the front matter of the talk file&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Embed&lt;/strong&gt; your slides (e.g. Google Slides) or presentation video on this page using &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34; target=&#34;_blank&#34;&gt;shortcodes&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Further talk details can easily be added to this page using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>External Project</title>
+      <link>/project/external-project/</link>
+      <pubDate>Wed, 27 Apr 2016 00:00:00 -0700</pubDate>
+      
+      <guid>/project/external-project/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Internal Project</title>
+      <link>/project/internal-project/</link>
+      <pubDate>Wed, 27 Apr 2016 00:00:00 -0700</pubDate>
+      
+      <guid>/project/internal-project/</guid>
+      <description>&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>A Person Re-Identification System For Mobile Devices</title>
+      <link>/publication/person-re-id/</link>
+      <pubDate>Tue, 01 Sep 2015 00:00:00 -0700</pubDate>
+      
+      <guid>/publication/person-re-id/</guid>
+      <description>&lt;p&gt;More detail can easily be written here using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Mobile visual clothing search</title>
+      <link>/publication/clothing-search/</link>
+      <pubDate>Mon, 01 Jul 2013 00:00:00 -0700</pubDate>
+      
+      <guid>/publication/clothing-search/</guid>
+      <description>&lt;p&gt;More detail can easily be written here using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Slides</title>
+      <link>/slides/example-slides/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/slides/example-slides/</guid>
+      <description>
+
+&lt;h1 id=&#34;welcome-to-slides&#34;&gt;Welcome to Slides&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/&#34; target=&#34;_blank&#34;&gt;Academic&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Efficiently write slides in Markdown&lt;/li&gt;
+&lt;li&gt;3-in-1: Create, Present, and Publish your slides&lt;/li&gt;
+&lt;li&gt;Supports speaker notes&lt;/li&gt;
+&lt;li&gt;Mobile friendly slides&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;controls&#34;&gt;Controls&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Next: &lt;code&gt;Right Arrow&lt;/code&gt; or &lt;code&gt;Space&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Previous: &lt;code&gt;Left Arrow&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Start: &lt;code&gt;Home&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Finish: &lt;code&gt;End&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Overview: &lt;code&gt;Esc&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Speaker notes: &lt;code&gt;S&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Fullscreen: &lt;code&gt;F&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Zoom: &lt;code&gt;Alt + Click&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/hakimel/reveal.js#pdf-export&#34; target=&#34;_blank&#34;&gt;PDF Export&lt;/a&gt;: &lt;code&gt;E&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;code-highlighting&#34;&gt;Code Highlighting&lt;/h2&gt;
+
+&lt;p&gt;Inline code: &lt;code&gt;variable&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Code block:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;porridge = &amp;quot;blueberry&amp;quot;
+if porridge == &amp;quot;blueberry&amp;quot;:
+    print(&amp;quot;Eating...&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;math&#34;&gt;Math&lt;/h2&gt;
+
+&lt;p&gt;In-line math: $x + y = z$&lt;/p&gt;
+
+&lt;p&gt;Block math:&lt;/p&gt;
+
+&lt;p&gt;$$
+f\left( x \right) = \;\frac{{2\left( {x + 4} \right)\left( {x - 4} \right)}}{{\left( {x + 4} \right)\left( {x + 1} \right)}}
+$$&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;fragments&#34;&gt;Fragments&lt;/h2&gt;
+
+&lt;p&gt;Make content appear incrementally&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{{% fragment %}} One {{% /fragment %}}
+{{% fragment %}} **Two** {{% /fragment %}}
+{{% fragment %}} Three {{% /fragment %}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Press &lt;code&gt;Space&lt;/code&gt; to play!&lt;/p&gt;
+
+&lt;p&gt;&lt;span class=&#34;fragment &#34; &gt;
+  One
+&lt;/span&gt;
+&lt;span class=&#34;fragment &#34; &gt;
+  &lt;strong&gt;Two&lt;/strong&gt;
+&lt;/span&gt;
+&lt;span class=&#34;fragment &#34; &gt;
+  Three
+&lt;/span&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;A fragment can accept two optional parameters:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;class&lt;/code&gt;: use a custom style (requires definition in custom CSS)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;weight&lt;/code&gt;: sets the order in which a fragment appears&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;speaker-notes&#34;&gt;Speaker Notes&lt;/h2&gt;
+
+&lt;p&gt;Add speaker notes to your presentation&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{% speaker_note %}}
+- Only the speaker can read these notes
+- Press `S` key to view
+{{% /speaker_note %}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Press the &lt;code&gt;S&lt;/code&gt; key to view the speaker notes!&lt;/p&gt;
+
+&lt;aside class=&#34;notes&#34;&gt;
+  &lt;ul&gt;
+&lt;li&gt;Only the speaker can read these notes&lt;/li&gt;
+&lt;li&gt;Press &lt;code&gt;S&lt;/code&gt; key to view&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/aside&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;themes&#34;&gt;Themes&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;black: Black background, white text, blue links (default)&lt;/li&gt;
+&lt;li&gt;white: White background, black text, blue links&lt;/li&gt;
+&lt;li&gt;league: Gray background, white text, blue links&lt;/li&gt;
+&lt;li&gt;beige: Beige background, dark text, brown links&lt;/li&gt;
+&lt;li&gt;sky: Blue background, thin dark text, blue links&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;ul&gt;
+&lt;li&gt;night: Black background, thick white text, orange links&lt;/li&gt;
+&lt;li&gt;serif: Cappuccino background, gray text, brown links&lt;/li&gt;
+&lt;li&gt;simple: White background, black text, blue links&lt;/li&gt;
+&lt;li&gt;solarized: Cream-colored background, dark green text, blue links&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+
+&lt;section data-noprocess data-shortcode-slide
+  
+      
+      data-background-image=&#34;/img/boards.jpg&#34;
+  &gt;
+
+
+&lt;h2 id=&#34;custom-slide&#34;&gt;Custom Slide&lt;/h2&gt;
+
+&lt;p&gt;Customize the slide style and background&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{&amp;lt; slide background-image=&amp;quot;/img/boards.jpg&amp;quot; &amp;gt;}}
+{{&amp;lt; slide background-color=&amp;quot;#0000FF&amp;quot; &amp;gt;}}
+{{&amp;lt; slide class=&amp;quot;my-style&amp;quot; &amp;gt;}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;custom-css-example&#34;&gt;Custom CSS Example&lt;/h2&gt;
+
+&lt;p&gt;Let&amp;rsquo;s make headers navy colored.&lt;/p&gt;
+
+&lt;p&gt;Create &lt;code&gt;assets/css/reveal_custom.css&lt;/code&gt; with:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.reveal section h1,
+.reveal section h2,
+.reveal section h3 {
+  color: navy;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&#34;questions&#34;&gt;Questions?&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://discourse.gohugo.io&#34; target=&#34;_blank&#34;&gt;Ask&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/&#34; target=&#34;_blank&#34;&gt;Documentation&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
