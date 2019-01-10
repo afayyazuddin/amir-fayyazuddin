@@ -1,0 +1,267 @@
+---
+title: 'Cleaning the Walkinshaw dataset. Part 2 '
+author: Amir Fayyazuddin
+date: '2019-01-07'
+slug: cleaning-the-walkinshaw-dataset-part-2
+categories: []
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+In the last post I scraped data from the Walkinshaw et al. (2015) paper and re-formatted it. In this post I will clean the table with scores from the entire screen provided in the supplemental data. This includes data from lines that didn't show a significant difference from wildtype. The benefit of having these scores is that one can get a good idea of experimental variance and it would be great if other groups would follow this lead. 
+
+The data is supplied as an .xlsx Excel file that we need to pull into R. This file only provides the identifier from the VDRC stock center (vdrc_id) so we will need to find the corresponding CG number which we will subsequently use to fill in the gene names. I downloaded the supplementary file into the project directory as Walkinshaw2016_suppl.xlsx and placed it in the Walkinshaw_data folder in my project directory but you can store it in any directory and include a path to that directory. We will use the **read_xlsx()** function from the tidyverse ```readxl``` package to pull in this data. If we inspect the file in Excel we know that the first column is blank and the next four columns contain the following data: VDRC identifier, Performance Index (PI), SEM, Date, Wing Deformity (presence or absence). The **read_excel** command will automatically skip the empty column and guess the type of data in the other columns.
+
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(readxl)
+suppl<-readxl::read_excel("Walkinshaw_data/Walkinshaw2015_suppl.xlsx")
+
+dplyr::glimpse(suppl)
+```
+Everything looks good except for the DATE column which is coded as text instead of date. The reason that the date column contains integer values is that Excel codes dates as the number of days since 30th December 1899. This suggests that readxl may have found some non-standard dates which caused it to default to using text instead of date. To look at the full complement of dates in the dataset we can treat the *DATE* column as a categorical variable and list all levels of the variable.
+```{r}
+levels(as.factor(suppl$DATE))
+```
+
+We see from this list that in addition to the numerical dates encoded for Excel several other formats are also represented. We want to pay particular attention to two types of formats: 1. where the cell is empty and 2. where the cell contains actual dates but which are written in text format. We will replace empty cells with the string "NA" so that regular expressions will work when we use the `stringr` package in subsequent steps. We will re-format dates that are coded as text into a standard format and then use the **as.date()** function to convert them into a date object. Finally we will convert the Excel-formatted dates and merge all data to build a final table.  
+
+In the following snippet we change the missing data to "NA" and then fix the dates coded as text. 
+```{r}
+library(stringr)
+# replace missing dates with NA
+suppl <- suppl %>% 
+  mutate(DATE=replace_na(DATE,"NA"))
+
+# copy text formatted dates to a separate table
+suppl_date <- suppl %>% 
+  filter(str_detect(DATE,"[0-9]/")) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE <- gsub("(20)([0-9][0-9])", "\\2", as.character(suppl_date$DATE))
+
+# remove the text "Date:" and convert to a date object
+suppl_date <- suppl_date %>% 
+  mutate(DATE=str_replace(DATE, "Date:","")) %>% 
+  mutate(DATE=as.Date(DATE, format = "%m/%d/%y"))
+
+levels(as.factor(suppl_date$DATE))
+
+```
+In the next snippet we filter out the rows that we have already converted to dates  and change the Excel encoded ones to R date objects. The cells that don't contain dates will be coerced into NAs implying missing data.
+```{r, warning=FALSE}
+suppl <- suppl %>% 
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, "[0-9]/")) %>% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = "1899-12-30"))
+
+```
+Now we can re-combine the two data tables into a single table with consistent date formatting.
+
+```{r}
+suppl <- bind_rows(suppl, suppl_date)
+
+levels(as.factor(suppl$DATE))
+```
+There are two sets of data points from the years 1900 and 1906 which clearly cannot be correct! We will leave them as is for now but these should be filtered out before conducting any time-dependent analysis. 
+
+Next we want to format the supplementary data to match the format of the significant_lines table that we constructed in the previous post. To do this we will change the column headers and also code the presence or absence of physical abnormality with "+" and "-" respectively. Originally I had thought about rounding the PI and SEM to two decimal places to match the data from the text of the article. However, the PI and SEM scores in the supplementary table are inconsistently rounded which may help us with subsetting the data later on so we will leave them in their current state for now. 
+
+```{r}
+suppl<-suppl %>% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %>%
+  # mutate(primary_PI = round(primary_PI, 2)) %>% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %>%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == "Present", "+")) %>%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), "-")) %>% 
+  arrange(vdrc_id)
+
+head(suppl, 10)
+```
+
+
+The only identifiers in this table are VDRC Identifiers (*vdrc_id*) which means we have to use additional resources to find the name of the targeted gene. We can add identifiers such as gene symbols, Entrez Gene IDs and Flybase IDs that will make it easier to use this data. The VDRC (Vienna Drosophila Resource Center) provides a complete list of their lines in a table that contains several useful identifiers: https://stockcenter.vdrc.at/control/fullCatalogueExcel. We will use the **read_xls()** command from the ```readxl``` package to load this file into a new dataframe. The **read_xls()** command guesses the data types but for this file it had trouble recognizing the data types in two of the columns. It turns out that these columns contained no data for the lines used in this screen so we can skip those columns using the following command.
+
+```{r, message=FALSE}
+VDRC <- read_xls("Walkinshaw_data/REPORT_VdrcCatalogue.xls", 
+                 col_types = c("guess", "guess", "guess", "guess",
+                               "guess","guess","guess","guess","guess",
+                               "guess","guess","skip","skip","guess","guess"))
+
+glimpse(VDRC)
+```
+
+There are 33286 lines in the dataset and a number of identifiers are available for each of them. However, many of them, such as the FlyBase Gene (FBgn) and gene name identifiers, can be unstable and this table lists a number of synonyms including ones that have been discarded. On the other hand only a single CG number is listed per line which we can later use in conjunction with the Ensembl BioMart webservice from the European Bioinformatics Institute (EBI) to add the current versions of the other identifiers. So for the time being we will discard the FBgn numbers and synonyms encoded by the last two columns of the dataframe and rename other columns so that they match the tables from the article. We will then use an inner join to combine the two datasets but discard all rows of the VDRC data that don't have a counterpart in the supplementary data from the paper.
+
+```{r}
+all_lines<-VDRC %>% 
+  dplyr::select(1:11) %>% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %>% 
+  dplyr::inner_join(suppl, by="vdrc_id")
+
+glimpse(all_lines)
+```
+
+Next we will use the biomart service of EBI to get current Entrez Gene IDs, FlyBase numbers and gene symbols using the list of CG numbers from the all_lines dataframe. The ```biomaRt``` package allows very convenient programmatic access to BioMart.
+
+```{r, cache=TRUE}
+library(biomaRt)
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart="ensembl", dataset="dmelanogaster_gene_ensembl",
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+genenames <- getBM(attributes=c('external_gene_name','entrezgene','flybase_gene_id',
+                                'flybasecgid_gene'), filters = 'flybasecgid_gene',
+                   values = unique(all_lines$cg_number), mart = ensembl)
+```
+Let's check the size of the genenames dataframe to get an idea if we were able to map every identifier. First we will check how many unique CG numbers there are in the Walkinshaw dataset:
+```{r}
+all_lines$cg_number %>% 
+  unique() %>% 
+  length()
+```
+Now we want to check how many ids we got from genenames:
+```{r}
+dim(genenames)
+```
+It is odd that we have 3020 identifiers from genenames compared to 2999 that we expected so we definitely want to see which CG numbers are being mapped to multiple identifiers. First we will look for CG numbers that are duplicated and store them in a vector called dup. Next we will filter the genenames dataframe to find rows which have duplicated CG ids:
+```{r}
+dup<-
+  genenames[which(duplicated(genenames$flybasecgid_gene)==TRUE),]$flybasecgid_gene
+
+dplyr::filter(genenames, flybasecgid_gene %in% dup)
+```
+There are two CG numbers that have multiple Entrez IDs. Let's deal with CG31613 first. In Eukaryotes, that is organisms that have a nucleus, DNA is wrapped around structures called nucleosomes which are octamers that consist of 4 different histone proteins of which Histone3 is one. Since this is a highly abundant and necessary protein, there are a total of 23 genes that encode for it. Five of these genes, including CG31613 are present in a cluster on chromosome 2L. In the Walkinshaw screen, 5 lines were used to target this gene cluster but since they all have an identical DNA sequence, they used a single CG number to refer to these lines. The Entrez Gene IDs probably reflect this ambiguity. CG18773, the second ambiguous CG number encodes a cuticular protein for which there are two identical genes in the fly genome. We will deal with both of these CG numbers by removing the Entrez IDs since they add no significant information to the dataset.
+```{r}
+# filter rows in genenames with CG ids not in the dup vector (note the ! operator)
+genenames <- dplyr::filter(genenames, !(flybasecgid_gene %in% dup))
+
+dim(genenames)
+```
+The *genenames* dataframe now has 2995 rows while the *all_lines* dataframe has 2999. Taking into account that we removed CG18733 and CG31613, we should have 2997 rows in *genenames*. We can check if there are any CG numbers that were not mapped by the BioMart webservice:
+
+```{r}
+all_lines$cg_number[(all_lines$cg_number %in% genenames$flybasecgid_gene)==FALSE]
+```
+There are indeed 2 CG numbers that were not mapped. One is called CGnone of which there are 24 instances and the other one is CG40378. The VDRC table shows that most of these lines are no longer available with one exception, 104930. I found the genomic DNA sequence for this construct on the [VDRC website](https://stockcenter.vdrc.at/control/main) and used BLAST on the [FlyBase website](http://flybase.net/blast/) to find where it mapped on the *Drosophila* genome. It turns out this line targets a long non-coding RNA called lncRNA:CR13130. The other unmapped CG number, CG40378, has been changed to CG45781. We will change CG40378 to CG45781, for stock 104930 we will change CGnone to CR13130, remove the other rows with CGnone and use BioMart to fill in the rest of the information.
+
+```{r, cache=TRUE}
+
+all_lines <- mutate(all_lines, cg_number = ifelse(cg_number == "CG40378", 
+                                                  "CG45781", cg_number))
+all_lines <- mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  "CR13130", cg_number))
+
+all_lines <- all_lines %>% 
+  filter(cg_number != "CGnone")
+
+genenames <- getBM(attributes=c('external_gene_name','flybase_gene_id',
+                                'flybasecgid_gene'), filters = 'flybasecgid_gene',
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+dim(genenames)
+```
+Now we have the same number of unique rows in the *genenames* dataframe as in the *all_lines* dataframe. We can also confirm that we have removed all of the CGnone rows. We can add the gene symbols and flybase gene ids to the *all_lines* dataframe using an inner join with the *genenames* dataframe.
+
+```{r}
+all_lines <- inner_join(genenames, all_lines, by=c("flybasecgid_gene"="cg_number")) %>% 
+  dplyr::select(4,1,2,3,5:19) %>% 
+  rename(cg_number=flybasecgid_gene)
+
+glimpse(all_lines)
+```
+We can collect the entire data cleaning code into a single script that we can source whenever we need to re-create the table.
+```{r, eval=FALSE}
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(biomaRt)
+
+suppl<-readxl::read_excel("/path/to/directory/Walkinshaw2015_suppl.xlsx")
+
+
+# copy text formatted dates to a separate table
+suppl_date <- suppl %>% 
+  filter(str_detect(DATE,"[0-9]/")) 
+
+# change 4 digit years to 2 digit years using a regular expression with gsub
+suppl_date$DATE <- gsub("(20)([0-9][0-9])", "\\2", as.character(suppl_date$DATE))
+
+# remove the text "Date:" and convert to a date object
+suppl_date <- suppl_date %>% 
+  mutate(DATE=str_replace(DATE, "Date:","")) %>% 
+  mutate(DATE=as.Date(DATE, format = "%m/%d/%y"))
+
+suppl <- suppl %>% 
+  # replace missing dates with NA
+  mutate(DATE=replace_na(DATE,"NA"))
+  # filter out dates encoded as text
+  filter(!str_detect(DATE, "[0-9]/")) %>% 
+  # convert Excel dates into R dates
+  mutate(DATE=as.Date(as.integer(DATE), origin = "1899-12-30")) %>% 
+  bind_rows(suppl_date) %>% 
+  rename(vdrc_id=1, primary_PI=2, primary_SEM=3, date=4, physical_abnormality=5) %>%
+  # mutate(primary_PI = round(primary_PI, 2)) %>% 
+  # mutate(primary_SEM = abs(round(primary_SEM, 2))) %>%
+  mutate(physical_abnormality = replace(physical_abnormality, 
+                                        physical_abnormality == "Present", "+")) %>%
+  mutate(physical_abnormality = replace(physical_abnormality,
+                                        is.na(physical_abnormality), "-")) %>% 
+  arrange(vdrc_id)
+  
+VDRC <- read_xls("/path/to/directory/REPORT_VdrcCatalogue.xls", 
+                 col_types = c("guess", "guess", "guess", "guess",
+                               "guess","guess","guess","guess","guess",
+                               "guess","guess","skip","skip","guess","guess"))
+
+all_lines<-VDRC %>% 
+  dplyr::select(1:11) %>% 
+  dplyr::rename(vdrc_id=1,construct_id=2,lib=3,cg_number=4,on_targets=5,
+                off_targets=6,s19=7,can_repeats=8,viability=9,chromosome_nr=10,
+                status=11) %>% 
+  dplyr::inner_join(suppl, by="vdrc_id") %>% 
+  
+  mutate(all_lines, cg_number = ifelse(cg_number == "CG40378", 
+                                                    "CG45781", cg_number)) %>% 
+  mutate(all_lines, cg_number = ifelse(vdrc_id == 104930, 
+                                                  "CR13130", cg_number)) %>% 
+  filter(cg_number != "CGnone")
+
+# connect to the ensembl Drosophila melanogaster database v.90
+ensembl = useEnsembl(biomart="ensembl", dataset="dmelanogaster_gene_ensembl",
+                     version=90)
+# get gene names, entrez gene id, FlyBase gene id, and FlyBase CG number
+# use the cg_number column from all_lines for identifiers
+
+genenames <- getBM(attributes=c('external_gene_name','flybase_gene_id',
+                                'flybasecgid_gene'), filters = 'flybasecgid_gene',
+                   values = unique(all_lines$cg_number), mart = ensembl)
+
+all_lines <- inner_join(genenames, all_lines, by=c("flybasecgid_gene"="cg_number")) %>% 
+  dplyr::select(4,1,2,3,5:19) %>% 
+  rename(cg_number=flybasecgid_gene)
+```
+
+
+```{r}
+sessionInfo()
+```
+
+
+### References
+Stat454
+Variance Explained
+Stack Overflow
+
+---
+
