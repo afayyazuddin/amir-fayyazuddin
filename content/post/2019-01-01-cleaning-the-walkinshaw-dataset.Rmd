@@ -1,0 +1,324 @@
+---
+title: Cleaning the Walkinshaw dataset
+author: Amir Fayyazuddin
+date: '2019-01-01'
+slug: cleaning-the-walkinshaw-dataset
+categories: []
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+The Davis lab published a genome-wide screen of genes involved in memory using 3655 RNAi lines from the VDRC collection (Walkinshaw et al. 2015 Genetics 199(4):1173-1182). They generously published the primary data including the scores for the lines that didn't show an effect as well as those that did. A small problem is that the data is split across several tables in the paper itself as well as in the supplementary data and in some cases identifiers are missing. In this blog post I will document how I went about generating a single table that contained all of the data from the screen and programmatically updated the identifiers. I have also provided the cleaned data table as a tsv file if you don't want to go to the trouble of following along. However, I don't make any guarantees as to the correctness of the final product and so you should use the table I have generated here with an appropriate level of caution.
+
+First we need a PDF copy of paper which you can get the paper from the Genetics website: http://www.genetics.org/content/genetics/199/4/1173.full.pdf. I saved my copy as Walkinshaw2016.pdf in my project directory but you can store it anywhere that is convenient and just remember to write out the appropriate paths. From this document we will scrape data from two tables. Table 2 has the list of all genes which when knocked down increased the performance index (PI) in a secondary screen. Table S2 lists the genes whose knock-down caused a decrease in the PI. To get this data we will use the tabulizer package from rOpenSci which provides an API to the Java Tabula package for extracting tables from PDFs. I have saved the PDF as Walkinshaw2016.pdf in the working directory. I'll treat these two tables separately starting with Table 2. The following code extracts the table which is located on page 5.
+
+```{r} 
+library(tabulizer)
+increasedPI <- tabulizer::extract_tables("~/Documents/R_projects/Walkinshaw/Walkinshaw2016.pdf", pages=5)
+```
+
+The type data structure output by the Tabulizer package is a list of character matrices where each element of the list is a matrix encoding each table on each page. First let's get the dimensions of the matrix for Table 2. 
+```{r}
+dim(increasedPI[[1]])
+```
+We can see that Table 2 is encoded as having 8 columns of 46 rows. Let's take a look at the first few lines of the this matrix:
+```{r}
+head(increasedPI[[1]])
+```
+
+In order to wrangle this data we will first convert it into a dataframe and specifying the number of rows in the matrix.  Let's look at the first 10 lines to develop a strategy for retaining all the useful information while removing artifacts of the conversion process.
+
+```{r}
+df_increasedPI<-data.frame(increasedPI[[1]], stringsAsFactors = FALSE)
+head(df_increasedPI, 10)
+```
+
+There are a few things that are immediately obvious that need to be corrected:
+
+1. The columns are named X1, X2, etc while the actual column names are in rows 1 and 2.
+2. Information that should be restricted to one row is sometimes spread out over two rows.
+3. Full gene names are used instead of standardized gene symbols.
+4. The symbol for +/- is somehow converted to the number 6.
+5. The PI and SEM should be in separate columns.
+6. The PI and SEM are coded as character data types and should be numeric.
+7. Absence of physical abnormality is coded by a non-standard character we want to convert to a "-".
+
+In the next chunk of code we will correct all of these problems using packages from the tidyverse. We will use the pipe operator to string together a number of operations to do this. What each element of the code does is commented in the code chunk below so I won't break it down further here. For the time being we will remove the gene names from the table and add in standardized symbols from a public database later on in the post. 
+
+```{r, message=FALSE}
+library(tidyverse)
+df_increasedPI<-df_increasedPI %>% 
+  # Remove rows containing column names
+  slice(-1:-2) %>%
+  # Add proper column names
+  rename(vdrc_id=X1, cg_number=X2, gene_name=X3, primary_score=X4, secondary_score=X5, physical_abnormality=X6, mean_activity_difference=X7, act_sig=X8) %>%
+  # Put PI and SEM in separate columns and remove +/- character and gene names
+  separate(primary_score, c("primary_PI", "dummy", "primary_SEM"), " ")%>%
+  dplyr::select(-dummy) %>%
+  separate(secondary_score, c("secondary_PI", "dummy", "secondary_SEM"), " ") %>%
+  dplyr::select(-dummy, -gene_name) %>%
+  # Remove all rows that don't have a valid vdrc_id
+  filter(vdrc_id != "") %>%
+  # Encode physical abnormality by + or -
+  mutate(physical_abnormality = replace(physical_abnormality, physical_abnormality != "+", "-")) %>%
+  mutate(vdrc_id = as.integer(vdrc_id)) %>%
+  # Convert PI and SEM to numeric
+  mutate(primary_PI = as.double(primary_PI), primary_SEM = abs(as.double(primary_SEM))) %>%
+  mutate(secondary_PI = as.double(secondary_PI), secondary_SEM = abs(as.double(secondary_SEM))) %>%
+  # Convert Mean Activity Difference to numeric and add column to indicate increase in memory
+  mutate(mean_activity_difference = as.double(mean_activity_difference)) %>%
+  mutate(change_in_memory = "+")
+
+head(df_increasedPI, 10)
+```
+The next set of data we will clean is the ones where the PIs are significantly less than the mean PI. This data is provided in the Table S2 of the supplemental data. We will read it in again using functions from the Tabulizer package. This data can be round on pages 13-38 of the Extended PDF of this paper. Let's load in the data and look at the first page
+
+```{r, cache=TRUE}
+decreasedPI <- tabulizer::extract_tables("~/Documents/R_projects/Walkinshaw/Walkinshaw2016.pdf", pages=13:38)
+head(decreasedPI[[1]])
+```
+As we can see the program thinks there are 18 columns, some of which have no elements. Let's see if this is the case for every page. We can use the function sapply to get the dimension of the matrix on each page.
+
+```{r}
+sapply(decreasedPI, dim)
+```
+
+Here the columns represent each page in the list while row 1 shows how many rows each matrix has and row 2 shows the number of columns. From this we can tell that the first page is unique in having 18 columns because the rest of them have only 8 columns. However, each page has different numbers of rows. Directly inspecting the table in the PDF we can see that this is indeed the case. To convert this list of matrices into a dataframe like we did for the increased PI we will write a function and apply it to each matrix to end up with a dataframe containing all of the data in the decreasedPI list. This function also removes all empty columns using the remove_empty_cols function of the janitor package and converts all missing data to NAs.
+
+```{r}
+library(janitor)
+dataframe_from_list<-function(mylist){
+  data.frame(mylist, stringsAsFactors = FALSE) %>%
+    mutate_all(funs(na_if(.,""))) %>% 
+    remove_empty("cols")
+}
+```
+Now we use lapply to apply this function to each element of the decreasedPI list of matrices and convert it to a list of dataframes with the data from this table. We will convert the list to a single dataframe with the bind_rows function from the tidyverse dplyr package and we will rename each of the columns from X1 to X8 so we can re-use the code that we used to clean the increased PI data except now we will code the change_in_memory column with a "-" to indicate a decrease in memory.
+
+```{r}
+df_decreasedPI<-lapply(decreasedPI, dataframe_from_list)
+colnames(df_decreasedPI[[1]])<-c("X1","X2","X3","X4","X5","X6","X7","X8")
+df_decreasedPI<-df_decreasedPI %>%
+  bind_rows() %>% 
+  # Remove the first row containing column names
+  slice(-1) %>%
+  rename(vdrc_id=X1, cg_number=X2, gene_name=X3, primary_score=X4, secondary_score=X5, physical_abnormality=X6, mean_activity_difference=X7, act_sig=X8) %>%
+  separate(primary_score, c("primary_PI", "dummy", "primary_SEM"), " ") %>%
+  dplyr::select(-dummy) %>%
+  separate(secondary_score, c("secondary_PI", "dummy", "secondary_SEM"), " ") %>%
+  dplyr::select(-dummy, -gene_name) %>%
+  filter(vdrc_id != "") %>% 
+  mutate(vdrc_id = as.integer(vdrc_id)) %>%
+  mutate(primary_PI = as.double(primary_PI), primary_SEM = abs(as.double(primary_SEM))) %>%
+  mutate(secondary_PI = as.double(secondary_PI), secondary_SEM = abs(as.double(secondary_SEM))) %>%
+  mutate(mean_activity_difference = as.double(mean_activity_difference))%>%
+  mutate(change_in_memory = "-")
+
+head(df_decreasedPI)
+```
+Unlike the increased PI table not all cases in the decreased PI table has scores for changes in activity which suggests that this test wasn't done for all lines. In our dataframe we have NAs in the act_sig column in all cases where there isn't a significant difference. In order to match the df_increasedPI table we want to change the act_sig column to have a null value in all cases that have a value in the mean_activity_difference column rather than an NA 
+
+```{r}
+df_decreasedPI<-df_decreasedPI %>% 
+  mutate(act_sig=if_else(!is.na(mean_activity_difference), "", act_sig))
+
+head(df_decreasedPI, 10)
+```
+
+
+We can now combine the cleaned decreased PI and increased PI datasets. We'll call this dataframe significant_lines
+```{r}
+significant_lines <- dplyr::full_join(df_increasedPI, df_decreasedPI) %>% 
+  arrange(vdrc_id) 
+
+head(significant_lines, 10)
+```
+
+One great thing about this paper is that the Davis lab has made available scores from all lines that they tested not just the ones that gave increased or decreased PI scores. These are available in the supplemental data as an excel file (.xlsx). We want to merge this dataset with our significant_lines file. First, however, we need to fill in some missing data. The supplementary file only has the identifier from the RNAi stock center (vdrc_id) so we need to find the corresponding CG number which we will use to fill in the gene names later on. I downloaded the supplementary file into the project directory as Walkinshaw2016_suppl.xlsx. However, I couldn't find an easy way to get the data from this file into R without miscoding the dates. I converted the file into a csv file before importing it into R using read_csv. 
+
+```{r}
+suppl<-read.csv("~/Documents/R_projects/Walkinshaw/Walkinshaw2016_suppl.csv", stringsAsFactors = FALSE)
+
+head(suppl, 10)
+```
+Notice that the first column, X, is empty. We will remove this column and change the names of the rest of the columns to match those in the significant_lines file.
+
+```{r}
+suppl<-suppl %>% 
+  dplyr::select(-X)
+
+colnames(suppl)<-c("vdrc_id", "primary_PI", "primary_SEM", "DATE", "physical_abnormality")
+```
+
+While browsing the file I noticed that the DATE column doesn't have uniform format. Also we want to convert the dates into a format that can be interpreted by R. Let's look at the full complement of dates in the dataset and to do this we will treat the date as a categorical variable and look at all the levels of the variable.
+
+```{r}
+levels(as.factor(suppl$DATE))
+```
+
+We see from this list that there are several different formats being used for dates. In most cases the last two digits of the year are displayed. However, in some cases the full 4 digit year is displayed and in others the dates are missing altogether. We will use regular expressions to detect the 4-digit years and replace them with 2-digits. We will also remove any extraneous characters and convert empty strings to missing data by replacing them with NA. Finally we will convert the date from the character data type to the Date data type to facilitate metadata analysis. 
+
+```{r}
+suppl$DATE<-gsub("(20)([0-9][0-9])", "\\2", as.character(suppl$DATE))
+
+suppl<-suppl %>% 
+  mutate(DATE=str_replace(DATE, "Date:", "")) %>%
+  mutate(DATE=str_replace(DATE, "Date", "")) %>% 
+  mutate_all(funs(na_if(.,""))) %>%
+  mutate(DATE=as.Date(DATE, format = "%m/%d/%y"))
+
+str(suppl)
+suppl$DATE %>% 
+  na.omit %>% 
+  range()
+```
+Next we want to format the supplementary data to match the format of the significant_lines table that we previously constructed. To do this we will round the PI and SEMs to two decimal points and code the presence or absence of physical abnormality with "+" and "-" respectively.
+
+```{r}
+suppl<-suppl %>% 
+  mutate(primary_PI = round(primary_PI, 2)) %>% 
+  mutate(primary_SEM = abs(round(primary_SEM, 2))) %>%
+  mutate(physical_abnormality = replace(physical_abnormality, physical_abnormality == "Present", "+")) %>%
+  mutate(physical_abnormality = replace(physical_abnormality, is.na(physical_abnormality), "-")) %>% 
+  arrange(vdrc_id)
+
+head(suppl, 10)
+```
+
+We will now join the supplementary data with the data from the significant lines using the full_join command from dplyr merging data on the common columns. This command retains all values so if there are discrepancies in the two data sets we should get duplications of some of the VDRC ids. 
+
+```{r}
+all_lines<-full_join(significant_lines, suppl, by=c("vdrc_id", "primary_PI", "primary_SEM", "physical_abnormality")) %>% 
+  arrange(vdrc_id)
+
+```
+
+Let's see what the size of the datasets are. The dimensions of the significant_lines dataframe is:
+
+```{r}
+dim(significant_lines)
+```
+
+The supplemental data is:
+
+```{r}
+dim(suppl)
+```
+
+and the merged data is:
+
+```{r}
+dim(all_lines)
+
+```
+
+We expect that the supplemental data would contain the significant_lines dataset but we notice that there is a discrepancy of 34 suggesting that there is a problem in 34 of the lines. We can take a closer look at these lines by counting how many are duplicated:
+
+```{r}
+which(duplicated(all_lines$vdrc_id)==TRUE) %>% length()
+
+```
+Since 34 of the lines are duplicated this completely explains the discrepancy. Now we want to find the reason behind this discrepancy. To do this we need to look at the rows that contain the duplicated vdrc_id. One way to do that is to use the VDRC ids to retrieve the rows. I couldn't find a very simple way of doing this so I split it into two parts. The first part assigns all the VDRC ids to a vector we call dup. We then use the dplyr filter command to pull out the rows with the VDRC ids in dup. Let's look at the first 15 rows.
+
+```{r}
+dup<-all_lines[which(duplicated(all_lines$vdrc_id)==TRUE),]$vdrc_id
+filter(all_lines, vdrc_id %in% dup) %>% head(15)
+```
+
+There are two things we can see from this snippet. One is that the SEMs are different in certain cases and the second is that the PIs are different in other cases (e.g. vdrc_id=100947. The small differences in the SEMs are easy to explain since they reflect idiosyncratic behavior of the round() function we used earlier to round the values to 2 decimal places. The differences in PI are larger but fewer in number so could reflect a data entry error. In all of these cases we will use the values from the manuscript since these are more likely to be correct. 
+
+First we will use anti-join() to remove all of the significant lines from the supplementary data and then use bind_rows() to add back these lines and then arrange them by ascending order of the VDRC id.
+
+```{r}
+all_lines <- anti_join(suppl, significant_lines, by=c("vdrc_id")) %>%
+  bind_rows(significant_lines) %>% 
+  arrange(vdrc_id)
+
+```
+
+However, with this approach we lose the dates for the significant lines. To add these back in we will select the vdrc_id and DATE columns from suppl and join them to the all_lines dataframe.
+
+```{r}
+all_lines <- suppl %>% 
+  dplyr::select(vdrc_id, DATE) %>% left_join(all_lines, by="vdrc_id") %>% 
+  dplyr::select(vdrc_id, cg_number, date_primary_expt=DATE.x, primary_PI, primary_SEM, secondary_PI, secondary_SEM, mean_activity_difference, act_sig, physical_abnormality, change_in_memory)
+
+```
+
+At this point we have all of the data in one table but the only consistent identifiers are the vdrc_id. We would like to add more useful identifiers such as gene symbols, Entrez Gene ID and Flybase IDs. The stock list from VDRC has some of these identifiers already and can be downloaded from the following link: https://stockcenter.vdrc.at/control/fullCatalogueExcel. We will use the readWorksheetFromFile command of the XLConnect package to load this file into a new dataframe and look at the variables in the dataframe using str() 
+
+```{r, message=FALSE}
+library(XLConnect)
+VDRC <- readWorksheetFromFile("~/Documents/R_projects/Walkinshaw/REPORT_VdrcCatalogue.xls", sheet = 1)
+
+str(VDRC)
+```
+
+There are a number of identifiers available but many of these are non-unique such as the FBgn numbers and names. The CG numbers are the most stable and that is what we will use for the time being but will use a webservice to add other identifiers later.
+
+```{r}
+all_lines<-VDRC %>% 
+  dplyr::select(vdrc.id, cg.number, library, on.targets., off.targets, s19, can.repeats, chromosome.nr) %>% 
+  inner_join(all_lines, by=c("vdrc.id"="vdrc_id")) %>%
+  dplyr::select(-"cg_number") %>% 
+  dplyr::rename(vdrc_id = vdrc.id, cg_number = cg.number, on_targets=on.targets., off_targets=off.targets, can_repeats=can.repeats, chromosome=chromosome.nr)
+
+head(all_lines, 10)
+```
+
+Next we will use the biomart service of EBI to get current Entrez Gene IDs, FlyBase numbers and gene symbols using the list of CG numbers from the all_lines dataframe. The biomaRt package allows very convenient programmatic access to biomart.
+
+```{r, cache=TRUE}
+library(biomaRt)
+ensembl = useEnsembl(biomart="ensembl", dataset="dmelanogaster_gene_ensembl", version=90)
+genenames <- getBM(attributes=c('external_gene_name','flybase_gene_id', 'flybasecgid_gene'), filters = 'flybasecgid_gene', values = unique(all_lines$cg_number), mart = ensembl)
+```
+Let's check the size of the genenames dataframe to get an idea if we were able to map every identifier.
+
+```{r}
+dim(genenames)
+```
+
+The genenames dataframe has 3154 rows instead of the 3206 that we expected, a discrepancy of 52. Let's find if there are any CG numbers that were not mapped.
+
+```{r}
+all_lines$cg_number[(all_lines$cg_number %in% genenames$flybasecgid_gene)==FALSE]
+```
+The striking thing is that there are 24 instances of CGnone in all_lines which indicates that the RNAi lines against these. There is also one real CG number, CG40378, and checking on Flybase we notice that it has been replaced by CG45781. We will remove the CGnone lines, change CG40378 to CG45781 and reuse Biomart to fill in the rest of the information.
+
+```{r, cache=TRUE}
+all_lines <- all_lines %>% 
+  filter(cg_number != "CGnone")
+
+all_lines$cg_number <- all_lines$cg_number %>% 
+  str_replace("CG40378", "CG45781")
+
+genenames <- getBM(attributes=c('external_gene_name','flybase_gene_id', 'flybasecgid_gene'), filters = 'flybasecgid_gene', values = unique(all_lines$cg_number), mart = ensembl)
+
+```
+
+Finally, we can add the gene symbols and flybase gene ids to the all_lines dataframe using an inner join with the genenames dataframe.
+
+```{r}
+all_lines <- inner_join(genenames, all_lines, by=c("flybasecgid_gene"="cg_number")) %>% 
+  dplyr::select(4,1,2,3,5:19) %>% 
+  rename(cg_number=flybasecgid_gene)
+
+head(all_lines, 10)
+```
+
+### Conclusions
+
+```{r}
+sessionInfo()
+```
+
+
+### References
+Stat454
+Variance Explained
+Stack Overflow
+
+---
