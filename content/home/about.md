@@ -21,13 +21,13 @@ weight = 4
 [[education.courses]]
   course = "PhD in Neurobiology"
   institution = "University of Chicago"
-  #year = 1998
+  #year 
 
 
 [[education.courses]]
   course = "AB in Mathematics"
   institution = "University of Chicago"
-  #year = 1989
+  #year 
  
 +++
 
