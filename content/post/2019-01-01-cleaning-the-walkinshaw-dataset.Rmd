@@ -1,5 +1,5 @@
 ---
-title: Cleaning the Walkinshaw dataset. Part I
+title: 'Cleaning the Walkinshaw dataset. Part I: Scraping tables from PDFs'
 author: Amir Fayyazuddin
 date: '2019-01-01'
 slug: cleaning-the-walkinshaw-dataset-part-I

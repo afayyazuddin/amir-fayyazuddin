@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Amir Fayyazuddin on Amir Fayyazuddin</title>
-    <link>https://amirfayyazuddin.netlify.com/</link>
+    <link>/</link>
     <description>Recent content in Amir Fayyazuddin on Amir Fayyazuddin</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
@@ -11,11 +11,11 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Cleaning the Walkinshaw dataset. Part 2 </title>
-      <link>https://amirfayyazuddin.netlify.com/post/cleaning-the-walkinshaw-dataset-part-2/</link>
+      <title>Cleaning the Walkinshaw dataset. Part 2: Adding identifiers using BioMart </title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-2/</link>
       <pubDate>Mon, 07 Jan 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/post/cleaning-the-walkinshaw-dataset-part-2/</guid>
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-2/</guid>
       <description>
 
 
@@ -481,18 +481,18 @@ all_lines &amp;lt;- inner_join(genenames, all_lines, by=c(&amp;quot;flybasecgid_
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] bindrcpp_0.2.2 stringr_1.3.1  readxl_1.2.0   tidyr_0.8.1   
-## [5] dplyr_0.7.6   
+## [1] bindrcpp_0.2.2 stringr_1.3.1  readxl_1.2.0   tidyr_0.8.2   
+## [5] dplyr_0.7.8   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.18     knitr_1.20       bindr_0.1.1      magrittr_1.5    
-##  [5] tidyselect_0.2.4 R6_2.2.2         rlang_0.3.0.1    fansi_0.4.0     
-##  [9] tools_3.5.1      xfun_0.3         utf8_1.1.4       cli_1.0.1       
-## [13] htmltools_0.3.6  yaml_2.2.0       rprojroot_1.3-2  digest_0.6.16   
-## [17] assertthat_0.2.0 tibble_2.0.0     crayon_1.3.4     bookdown_0.7    
-## [21] purrr_0.2.5      glue_1.3.0       evaluate_0.11    rmarkdown_1.10  
-## [25] blogdown_0.8     stringi_1.2.4    cellranger_1.1.0 compiler_3.5.1  
-## [29] pillar_1.3.1     backports_1.1.2  pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
+##  [1] Rcpp_1.0.0       knitr_1.21       bindr_0.1.1      magrittr_1.5    
+##  [5] tidyselect_0.2.5 R6_2.3.0         rlang_0.3.1      fansi_0.4.0     
+##  [9] tools_3.5.1      xfun_0.4         utf8_1.1.4       cli_1.0.1       
+## [13] htmltools_0.3.6  yaml_2.2.0       digest_0.6.18    assertthat_0.2.0
+## [17] tibble_2.0.0     crayon_1.3.4     bookdown_0.9     purrr_0.2.5     
+## [21] glue_1.3.0       evaluate_0.12    rmarkdown_1.11   blogdown_0.10   
+## [25] stringi_1.2.4    cellranger_1.1.0 compiler_3.5.1   pillar_1.3.1    
+## [29] pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
 &lt;div id=&#34;references&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;References&lt;/h3&gt;
 &lt;p&gt;Stat454
@@ -504,11 +504,11 @@ Stack Overflow&lt;/p&gt;
     </item>
     
     <item>
-      <title>Cleaning the Walkinshaw dataset. Part I</title>
-      <link>https://amirfayyazuddin.netlify.com/post/cleaning-the-walkinshaw-dataset-part-i/</link>
+      <title>Cleaning the Walkinshaw dataset. Part I: Scraping tables from PDFs</title>
+      <link>/post/cleaning-the-walkinshaw-dataset-part-i/</link>
       <pubDate>Tue, 01 Jan 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/post/cleaning-the-walkinshaw-dataset-part-i/</guid>
+      <guid>/post/cleaning-the-walkinshaw-dataset-part-i/</guid>
       <description>
 
 
@@ -833,32 +833,31 @@ significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI) %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] janitor_1.1.1   bindrcpp_0.2.2  tidyr_0.8.1     dplyr_0.7.6    
+## [1] janitor_1.1.1   bindrcpp_0.2.2  tidyr_0.8.2     dplyr_0.7.8    
 ## [5] tabulizer_0.2.2
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.18        knitr_1.20          bindr_0.1.1        
-##  [4] magrittr_1.5        tidyselect_0.2.4    R6_2.2.2           
-##  [7] rlang_0.3.0.1       fansi_0.4.0         stringr_1.3.1      
-## [10] tools_3.5.1         xfun_0.3            png_0.1-7          
+##  [1] Rcpp_1.0.0          knitr_1.21          bindr_0.1.1        
+##  [4] magrittr_1.5        tidyselect_0.2.5    R6_2.3.0           
+##  [7] rlang_0.3.1         fansi_0.4.0         stringr_1.3.1      
+## [10] tools_3.5.1         xfun_0.4            png_0.1-7          
 ## [13] utf8_1.1.4          cli_1.0.1           htmltools_0.3.6    
-## [16] yaml_2.2.0          rprojroot_1.3-2     digest_0.6.16      
-## [19] assertthat_0.2.0    tibble_2.0.0        crayon_1.3.4       
-## [22] bookdown_0.7        rJava_0.9-10        purrr_0.2.5        
-## [25] glue_1.3.0          evaluate_0.11       rmarkdown_1.10     
-## [28] blogdown_0.8        stringi_1.2.4       pillar_1.3.1       
-## [31] compiler_3.5.1      tabulizerjars_1.0.1 backports_1.1.2    
-## [34] pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
+## [16] yaml_2.2.0          digest_0.6.18       assertthat_0.2.0   
+## [19] tibble_2.0.0        crayon_1.3.4        bookdown_0.9       
+## [22] rJava_0.9-10        purrr_0.2.5         glue_1.3.0         
+## [25] evaluate_0.12       rmarkdown_1.11      blogdown_0.10      
+## [28] stringi_1.2.4       compiler_3.5.1      pillar_1.3.1       
+## [31] tabulizerjars_1.0.1 pkgconfig_2.0.2&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
     
     <item>
       <title>Example Page</title>
-      <link>https://amirfayyazuddin.netlify.com/tutorial/example/</link>
+      <link>/tutorial/example/</link>
       <pubDate>Sun, 09 Sep 2018 00:00:00 -0700</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/tutorial/example/</guid>
+      <guid>/tutorial/example/</guid>
       <description>
 
 &lt;p&gt;In this tutorial, I&amp;rsquo;ll share my top 10 tips for getting started with Academic:&lt;/p&gt;
@@ -875,10 +874,10 @@ significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI) %&amp;gt;%
     
     <item>
       <title>Example Talk</title>
-      <link>https://amirfayyazuddin.netlify.com/talk/example/</link>
+      <link>/talk/example/</link>
       <pubDate>Sun, 01 Jan 2017 00:00:00 -0800</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/talk/example/</guid>
+      <guid>/talk/example/</guid>
       <description>&lt;div class=&#34;alert alert-note&#34;&gt;
   &lt;p&gt;Click on the &lt;strong&gt;Slides&lt;/strong&gt; button above to view the built-in slides feature.&lt;/p&gt;
 
@@ -899,19 +898,19 @@ significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI) %&amp;gt;%
     
     <item>
       <title>External Project</title>
-      <link>https://amirfayyazuddin.netlify.com/project/external-project/</link>
+      <link>/project/external-project/</link>
       <pubDate>Wed, 27 Apr 2016 00:00:00 -0700</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/project/external-project/</guid>
+      <guid>/project/external-project/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Internal Project</title>
-      <link>https://amirfayyazuddin.netlify.com/project/internal-project/</link>
+      <link>/project/internal-project/</link>
       <pubDate>Wed, 27 Apr 2016 00:00:00 -0700</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/project/internal-project/</guid>
+      <guid>/project/internal-project/</guid>
       <description>&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
 
 &lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
@@ -926,30 +925,30 @@ significant_lines &amp;lt;- bind_rows(df_decreasedPI, df_increasedPI) %&amp;gt;%
     
     <item>
       <title>A Person Re-Identification System For Mobile Devices</title>
-      <link>https://amirfayyazuddin.netlify.com/publication/person-re-id/</link>
+      <link>/publication/person-re-id/</link>
       <pubDate>Tue, 01 Sep 2015 00:00:00 -0700</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/publication/person-re-id/</guid>
+      <guid>/publication/person-re-id/</guid>
       <description>&lt;p&gt;More detail can easily be written here using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Mobile visual clothing search</title>
-      <link>https://amirfayyazuddin.netlify.com/publication/clothing-search/</link>
+      <link>/publication/clothing-search/</link>
       <pubDate>Mon, 01 Jul 2013 00:00:00 -0700</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/publication/clothing-search/</guid>
+      <guid>/publication/clothing-search/</guid>
       <description>&lt;p&gt;More detail can easily be written here using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Slides</title>
-      <link>https://amirfayyazuddin.netlify.com/slides/example-slides/</link>
+      <link>/slides/example-slides/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://amirfayyazuddin.netlify.com/slides/example-slides/</guid>
+      <guid>/slides/example-slides/</guid>
       <description>
 
 &lt;h1 id=&#34;welcome-to-slides&#34;&gt;Welcome to Slides&lt;/h1&gt;

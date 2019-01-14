@@ -1,5 +1,5 @@
 ---
-title: 'Cleaning the Walkinshaw dataset. Part 2 '
+title: 'Cleaning the Walkinshaw dataset. Part 2: Adding identifiers using BioMart '
 author: Amir Fayyazuddin
 date: '2019-01-07'
 slug: cleaning-the-walkinshaw-dataset-part-2
