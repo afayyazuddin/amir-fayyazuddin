@@ -252,16 +252,11 @@ all_lines <- inner_join(genenames, all_lines, by=c("flybasecgid_gene"="cg_number
   rename(cg_number=flybasecgid_gene)
 ```
 
-
+### Session Info
 ```{r}
 sessionInfo()
 ```
 
-
-### References
-Stat454
-Variance Explained
-Stack Overflow
 
 ---
 
